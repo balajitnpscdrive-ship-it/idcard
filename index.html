@@ -22,7 +22,7 @@
             /* Card Spec Constants */
             --card-width: 53.98mm;
             --card-height: 85.6mm;
-            --card-scale: 4.8; /* Display preview scaling */
+            --card-scale: 3.5; /* Display preview scaling (optimized to prevent screen overflow) */
         }
 
         * {
@@ -439,9 +439,9 @@
             height: calc(var(--card-height) * var(--card-scale));
             border-radius: calc(3.5mm * var(--card-scale));
             position: relative;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5), 0 0 15px rgba(99, 102, 241, 0.05);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15), 0 0 10px rgba(0, 0, 0, 0.05);
             overflow: hidden;
-            background: #090915;
+            background: #ffffff;
             user-select: none;
         }
 
@@ -452,7 +452,7 @@
             flex-direction: column;
             padding: calc(4mm * var(--card-scale));
             box-sizing: border-box;
-            background: linear-gradient(145deg, #09091c 0%, #0d0c29 50%, #060514 100%);
+            background: #ffffff;
             display: none; /* Controlled dynamically in JS */
         }
 
@@ -460,15 +460,13 @@
             display: flex;
         }
 
-        /* Dynamic House Glow Border */
+        /* Dynamic House Border */
         .card-glow-border {
             position: absolute;
             inset: 0;
             border-radius: calc(3.5mm * var(--card-scale));
-            border: calc(0.6mm * var(--card-scale)) solid transparent;
-            background: linear-gradient(#080816, #0d0c24) padding-box,
-                        linear-gradient(180deg, var(--house-color) 0%, rgba(255,255,255,0.05) 50%, var(--house-color) 100%) border-box;
-            z-index: 1;
+            border: calc(0.8mm * var(--card-scale)) solid var(--house-color);
+            z-index: 5;
             pointer-events: none;
         }
 
@@ -476,11 +474,38 @@
             position: absolute;
             inset: 0;
             background-image: 
-                radial-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-                linear-gradient(rgba(99, 102, 241, 0.02) 1px, transparent 1px);
+                radial-gradient(rgba(148, 163, 184, 0.1) 1px, transparent 1px),
+                linear-gradient(rgba(148, 163, 184, 0.03) 1px, transparent 1px);
             background-size: calc(3mm * var(--card-scale)) calc(3mm * var(--card-scale)), 100% calc(8mm * var(--card-scale));
             z-index: 1;
             opacity: 0.8;
+            pointer-events: none;
+        }
+
+        /* Graphic Designs Shapes */
+        .card-graphic-bg {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 50%;
+            height: 25%;
+            background: var(--house-color);
+            opacity: 0.08;
+            clip-path: polygon(100% 0, 0 100%, 100% 100%);
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .card-graphic-bg-left {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 30%;
+            height: 15%;
+            background: var(--house-color);
+            opacity: 0.05;
+            clip-path: polygon(0 0, 0 100%, 100% 100%);
+            z-index: 1;
             pointer-events: none;
         }
 
@@ -498,17 +523,21 @@
             display: flex;
             align-items: center;
             gap: calc(2mm * var(--card-scale));
-            border-bottom: calc(0.2mm * var(--card-scale)) solid rgba(255, 255, 255, 0.08);
-            padding-bottom: calc(1.5mm * var(--card-scale));
+            margin: calc(-4mm * var(--card-scale)) calc(-4mm * var(--card-scale)) calc(2.2mm * var(--card-scale)) calc(-4mm * var(--card-scale));
+            padding: calc(4mm * var(--card-scale)) calc(4mm * var(--card-scale)) calc(3mm * var(--card-scale)) calc(4mm * var(--card-scale));
+            background: linear-gradient(135deg, #1e1b4b 0%, var(--house-color) 100%);
+            border-bottom: calc(0.4mm * var(--card-scale)) solid rgba(255, 255, 255, 0.15);
+            border-top-left-radius: calc(2.7mm * var(--card-scale));
+            border-top-right-radius: calc(2.7mm * var(--card-scale));
         }
 
         .c-front-logo {
-            width: calc(8mm * var(--card-scale));
-            height: calc(8mm * var(--card-scale));
+            width: calc(8.5mm * var(--card-scale));
+            height: calc(8.5mm * var(--card-scale));
             border-radius: 50%;
             object-fit: cover;
-            background: rgba(255,255,255,0.05);
-            border: calc(0.3mm * var(--card-scale)) solid rgba(255,255,255,0.2);
+            background: #ffffff;
+            border: calc(0.3mm * var(--card-scale)) solid rgba(255,255,255,0.8);
         }
 
         .c-front-college-details {
@@ -520,14 +549,14 @@
             font-family: 'Outfit', sans-serif;
             font-weight: 800;
             font-size: calc(2.4mm * var(--card-scale));
-            color: #fff;
+            color: #ffffff;
             letter-spacing: 0.1px;
             text-transform: uppercase;
         }
 
         .c-front-college-addr {
             font-size: calc(1.1mm * var(--card-scale));
-            color: var(--text-secondary);
+            color: rgba(255, 255, 255, 0.75);
             font-weight: 600;
             letter-spacing: 0.2px;
         }
@@ -537,7 +566,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            margin: calc(2.2mm * var(--card-scale)) 0;
+            margin: calc(1.5mm * var(--card-scale)) 0;
             flex-grow: 1;
             justify-content: center;
         }
@@ -551,17 +580,17 @@
             width: calc(21mm * var(--card-scale));
             height: calc(27mm * var(--card-scale));
             object-fit: cover;
-            border-radius: calc(2mm * var(--card-scale));
-            border: calc(0.5mm * var(--card-scale)) solid var(--house-color);
-            background: #0a0a10;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+            border-radius: calc(2.2mm * var(--card-scale));
+            border: calc(0.6mm * var(--card-scale)) solid var(--house-color);
+            background: #f8fafc;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.12);
         }
 
         .c-front-name {
             font-family: 'Outfit', sans-serif;
             font-weight: 800;
             font-size: calc(3.2mm * var(--card-scale));
-            color: #fff;
+            color: #0f172a;
             text-align: center;
             letter-spacing: 0.2px;
             text-transform: uppercase;
@@ -575,7 +604,7 @@
 
         .c-front-dept {
             font-size: calc(1.6mm * var(--card-scale));
-            color: var(--house-color);
+            color: #475569;
             font-weight: 700;
             letter-spacing: 0.5px;
             text-transform: uppercase;
@@ -590,8 +619,8 @@
             grid-template-columns: 1fr 1fr;
             row-gap: calc(0.9mm * var(--card-scale));
             column-gap: calc(2mm * var(--card-scale));
-            background: rgba(255, 255, 255, 0.02);
-            border: calc(0.2mm * var(--card-scale)) solid rgba(255, 255, 255, 0.05);
+            background: #f8fafc;
+            border: calc(0.2mm * var(--card-scale)) solid #e2e8f0;
             border-radius: calc(1.5mm * var(--card-scale));
             padding: calc(1.3mm * var(--card-scale));
             margin-bottom: calc(1.5mm * var(--card-scale));
@@ -605,7 +634,7 @@
         .c-front-grid-lbl {
             font-size: calc(0.95mm * var(--card-scale));
             font-weight: 700;
-            color: var(--text-secondary);
+            color: #64748b;
             text-transform: uppercase;
             letter-spacing: 0.2px;
         }
@@ -613,7 +642,12 @@
         .c-front-grid-val {
             font-size: calc(1.4mm * var(--card-scale));
             font-weight: 700;
-            color: #fff;
+            color: #0f172a;
+        }
+
+        .c-front-grid-val.house-value {
+            color: var(--house-color);
+            filter: brightness(0.8);
         }
 
         /* Front Footer: Signature + QR */
@@ -621,7 +655,7 @@
             display: flex;
             align-items: flex-end;
             justify-content: space-between;
-            border-top: calc(0.2mm * var(--card-scale)) solid rgba(255, 255, 255, 0.08);
+            border-top: calc(0.2mm * var(--card-scale)) solid #e2e8f0;
             padding-top: calc(1.5mm * var(--card-scale));
         }
 
@@ -635,23 +669,24 @@
             height: calc(5.5mm * var(--card-scale));
             max-width: calc(22mm * var(--card-scale));
             object-fit: contain;
-            filter: brightness(1.2) contrast(1.2);
+            filter: contrast(1.15);
             margin-bottom: calc(0.5mm * var(--card-scale));
-            opacity: 0.85;
+            opacity: 0.95;
         }
 
         .c-front-sig-title {
             font-size: calc(1mm * var(--card-scale));
             font-weight: 700;
-            color: var(--text-secondary);
+            color: #64748b;
             text-transform: uppercase;
             letter-spacing: 0.3px;
         }
 
         .c-front-qr-wrap {
-            background: #fff;
+            background: #ffffff;
             padding: calc(0.8mm * var(--card-scale));
             border-radius: calc(1mm * var(--card-scale));
+            border: calc(0.2mm * var(--card-scale)) solid #cbd5e1;
             width: calc(14mm * var(--card-scale));
             height: calc(14mm * var(--card-scale));
             display: flex;
@@ -667,8 +702,12 @@
         /* ── BACK SIDE ── */
         .c-back-header {
             text-align: center;
-            border-bottom: calc(0.2mm * var(--card-scale)) solid rgba(255, 255, 255, 0.08);
-            padding-bottom: calc(1.5mm * var(--card-scale));
+            margin: calc(-4mm * var(--card-scale)) calc(-4mm * var(--card-scale)) calc(2mm * var(--card-scale)) calc(-4mm * var(--card-scale));
+            padding: calc(4mm * var(--card-scale)) calc(4mm * var(--card-scale)) calc(3mm * var(--card-scale)) calc(4mm * var(--card-scale));
+            background: linear-gradient(135deg, #1e1b4b 0%, var(--house-color) 100%);
+            border-bottom: calc(0.4mm * var(--card-scale)) solid rgba(255, 255, 255, 0.15);
+            border-top-left-radius: calc(2.7mm * var(--card-scale));
+            border-top-right-radius: calc(2.7mm * var(--card-scale));
         }
 
         .c-back-header h3 {
@@ -676,7 +715,7 @@
             font-size: calc(2.2mm * var(--card-scale));
             font-weight: 800;
             text-transform: uppercase;
-            color: #fff;
+            color: #ffffff;
         }
 
         .c-back-body {
@@ -698,14 +737,15 @@
             height: calc(15mm * var(--card-scale));
             border-radius: 50%;
             object-fit: cover;
-            border: calc(0.5mm * var(--card-scale)) solid #fbbf24; /* Golden frame */
-            background: #0a0a10;
+            border: calc(0.5mm * var(--card-scale)) solid #fbbf24;
+            background: #f8fafc;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
 
         .c-back-founder-quote {
             font-size: calc(1.15mm * var(--card-scale));
             font-style: italic;
-            color: var(--text-secondary);
+            color: #475569;
             text-align: center;
             max-width: 90%;
             line-height: 1.3;
@@ -726,8 +766,8 @@
 
         .c-back-address-block {
             width: 100%;
-            background: rgba(255, 255, 255, 0.02);
-            border: calc(0.2mm * var(--card-scale)) solid rgba(255, 255, 255, 0.05);
+            background: #f8fafc;
+            border: calc(0.2mm * var(--card-scale)) solid #e2e8f0;
             border-radius: calc(1.5mm * var(--card-scale));
             padding: calc(1.5mm * var(--card-scale));
             display: flex;
@@ -739,19 +779,20 @@
             font-size: calc(0.95mm * var(--card-scale));
             font-weight: 700;
             color: var(--house-color);
+            filter: brightness(0.8);
             text-transform: uppercase;
             letter-spacing: 0.3px;
         }
 
         .c-back-addr-val {
             font-size: calc(1.15mm * var(--card-scale));
-            color: #fff;
+            color: #0f172a;
             line-height: 1.25;
             font-weight: 600;
         }
 
         .c-back-footer {
-            border-top: calc(0.2mm * var(--card-scale)) solid rgba(255, 255, 255, 0.08);
+            border-top: calc(0.2mm * var(--card-scale)) solid #e2e8f0;
             padding-top: calc(1.5mm * var(--card-scale));
             text-align: center;
         }
@@ -817,6 +858,18 @@
         }
 
         /* ── MOBILE OPTIMIZATIONS (COMPACT & COLLAPSED VIEWS) ── */
+        @media (max-width: 1400px) {
+            :root {
+                --card-scale: 3.2; /* Shrinks card scale to fit medium viewports */
+            }
+        }
+
+        @media (max-width: 1100px) {
+            :root {
+                --card-scale: 2.8; /* Prevents overflow cut-out */
+            }
+        }
+
         @media (max-width: 900px) {
             .app-container {
                 grid-template-columns: 1fr;
@@ -838,9 +891,9 @@
                 border-radius: 16px;
             }
 
-            /* Adjust card scale to fit smaller mobile viewports cleanly */
+            /* Since layout is now stacked (1 column), scale can be slightly larger */
             :root {
-                --card-scale: 4.1; /* Drops dimensions slightly to fit 320px screens */
+                --card-scale: 3.0; 
             }
 
             .preview-controls {
@@ -852,13 +905,29 @@
             }
         }
 
+        @media (max-width: 768px) {
+            :root {
+                --card-scale: 2.4; 
+            }
+        }
+
         @media (max-width: 500px) {
             :root {
-                --card-scale: 3.5; /* Maximum scaling compression for compact mobile */
+                --card-scale: 1.8; /* Scaled down for mobile screen widths */
             }
 
             .id-card-wrapper {
                 gap: 10px;
+            }
+            
+            .api-setup-bar input {
+                width: 140px; /* Compress input on tiny mobile viewports */
+            }
+        }
+
+        @media (max-width: 380px) {
+            :root {
+                --card-scale: 1.4; /* Fits perfectly on very compact mobile widths */
             }
         }
 
@@ -930,7 +999,7 @@
             .print-card-box .card-side {
                 padding: 4mm !important;
                 border-radius: 3.5mm !important;
-                background: linear-gradient(145deg, #09091c 0%, #0d0c29 50%, #060514 100%) !important;
+                background: #ffffff !important;
                 display: flex !important; /* Forces all cards visible during print */
                 print-color-adjust: exact;
                 -webkit-print-color-adjust: exact;
@@ -1012,6 +1081,7 @@
                     <select id="student-selector" onchange="selectStudent(this.value)">
                         <option value="">-- Add New Student --</option>
                     </select>
+                    <a href="#" onclick="seedDemoStudents(event)" style="font-size: 10.5px; color: var(--accent-primary); font-weight: 700; text-decoration: none; margin-top: 6px; display: inline-block;">💡 Seed Demo Students into Google Sheet</a>
                 </div>
 
                 <hr style="border: 0; border-top: 1px solid var(--border-glass); margin: 15px 0;">
@@ -1193,6 +1263,8 @@
                     <div class="card-side active" id="card-side-front">
                         <div class="card-glow-border"></div>
                         <div class="card-grid-pattern"></div>
+                        <div class="card-graphic-bg"></div>
+                        <div class="card-graphic-bg-left"></div>
                         
                         <div class="card-content">
                             <!-- Header -->
@@ -1207,7 +1279,7 @@
                             <!-- Body -->
                             <div class="c-front-body">
                                 <div class="c-front-photo-frame">
-                                    <img id="card-photo-img" class="c-front-photo" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 88 110'%3E%3Crect width='88' height='110' fill='%23ffffff08'/%3E%3Ccircle cx='44' cy='38' r='22' fill='%23ffffff15'/%3E%3Cellipse cx='44' cy='90' rx='32' ry='22' fill='%23ffffff15'/%3E%3C/svg%3E">
+                                    <img id="card-photo-img" class="c-front-photo" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 88 110'%3E%3Crect width='88' height='110' fill='%230f172a05'/%3E%3Ccircle cx='44' cy='38' r='22' fill='%230f172a12'/%3E%3Cellipse cx='44' cy='90' rx='32' ry='22' fill='%230f172a12'/%3E%3C/svg%3E">
                                 </div>
                                 
                                 <div class="c-front-name" id="card-student-name">STUDENT NAME</div>
@@ -1220,7 +1292,7 @@
                                     </div>
                                     <div class="c-front-grid-item">
                                         <span class="c-front-grid-lbl">House</span>
-                                        <span class="c-front-grid-val" id="card-student-house">-</span>
+                                        <span class="c-front-grid-val house-value" id="card-student-house">-</span>
                                     </div>
                                     <div class="c-front-grid-item">
                                         <span class="c-front-grid-lbl">Blood Grp</span>
@@ -1236,7 +1308,7 @@
                             <!-- Footer -->
                             <div class="c-front-footer">
                                 <div class="c-front-sig-wrap">
-                                    <img id="card-signature-img" class="c-front-sig-img" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 30'%3E%3Cpath d='M10,20 Q30,5 50,22 T90,12' fill='none' stroke='%23ffffff33' stroke-width='2'/%3E%3C/svg%3E">
+                                    <img id="card-signature-img" class="c-front-sig-img" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 30'%3E%3Cpath d='M10,20 Q30,5 50,22 T90,12' fill='none' stroke='%230f172a22' stroke-width='2'/%3E%3C/svg%3E">
                                     <span class="c-front-sig-title">Principal</span>
                                 </div>
                                 
@@ -1251,6 +1323,8 @@
                     <div class="card-side" id="card-side-back">
                         <div class="card-glow-border"></div>
                         <div class="card-grid-pattern"></div>
+                        <div class="card-graphic-bg"></div>
+                        <div class="card-graphic-bg-left"></div>
                         
                         <div class="card-content">
                             <!-- Header -->
@@ -1261,7 +1335,7 @@
                             <!-- Body -->
                             <div class="c-back-body">
                                 <div class="c-back-founder-frame">
-                                    <img id="card-founder-img" class="c-back-founder-pic" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 60'%3E%3Ccircle cx='30' cy='30' r='28' fill='%23ffffff08'/%3E%3Ccircle cx='30' cy='22' r='10' fill='%23ffffff15'/%3E%3Cellipse cx='30' cy='48' rx='20' ry='12' fill='%23ffffff15'/%3E%3C/svg%3E">
+                                    <img id="card-founder-img" class="c-back-founder-pic" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 60'%3E%3Ccircle cx='30' cy='30' r='28' fill='%230f172a05'/%3E%3Ccircle cx='30' cy='22' r='10' fill='%230f172a12'/%3E%3Cellipse cx='30' cy='48' rx='20' ry='12' fill='%230f172a12'/%3E%3C/svg%3E">
                                 </div>
 
                                 <div class="c-back-founder-quote" id="card-founder-quote">
@@ -1801,6 +1875,53 @@
             reader.readAsText(file);
         }
 
+        // --- SEED DEMO STUDENTS ---
+        async function seedDemoStudents(e) {
+            if (e) e.preventDefault();
+            if (!API_URL) {
+                alert("Please configure and save your Script URL in the header first!");
+                return;
+            }
+            if (!confirm("This will seed your spreadsheet with 2 demo students (Nexus & Novas Houses). Continue?")) return;
+
+            const demoStudents = [
+                {
+                    Name: "SENTHIL KUMAR D",
+                    Department: "Mechanical Engineering",
+                    RollNo: "24ME02",
+                    House: "Novas",
+                    BloodGroup: "O +ve",
+                    StartYear: "2024",
+                    EndYear: "2027",
+                    Address: "45, Mariamman Koil Street, Mudaliarpet, Puducherry",
+                    Phone: "+91 98765 43210"
+                },
+                {
+                    Name: "ALEXANDER SMITH",
+                    Department: "Computer Engineering",
+                    RollNo: "24CO15",
+                    House: "Nexus",
+                    BloodGroup: "B +ve",
+                    StartYear: "2024",
+                    EndYear: "2027",
+                    Address: "12, Rose Garden, Lawspet, Puducherry",
+                    Phone: "+91 94432 10987"
+                }
+            ];
+
+            try {
+                const res = await apiPost("bulkUploadStudents", { students: demoStudents, startNum: 1 });
+                if (res.status === "success") {
+                    alert("Demo students successfully seeded in your Google Sheet!");
+                    await fetchInitialData();
+                } else {
+                    alert("Failed to seed demo students: " + res.error);
+                }
+            } catch (err) {
+                alert("Error seeding demo students: " + err.message);
+            }
+        }
+
         function parseCSVText(text) {
             const lines = text.split(/\r\n|\n/);
             if (lines.length < 2) return [];
@@ -1976,6 +2097,8 @@
                         <div class="card-side active" style="z-index: 5;">
                             <div class="card-glow-border"></div>
                             <div class="card-grid-pattern"></div>
+                            <div class="card-graphic-bg"></div>
+                            <div class="card-graphic-bg-left"></div>
                             <div class="card-content">
                                 <div class="c-front-header">
                                     <img class="c-front-logo" src="${logoSrc}">
@@ -1992,7 +2115,7 @@
                                     <div class="c-front-dept">${student.Department.toUpperCase()}</div>
                                     <div class="c-front-details-grid">
                                         <div class="c-front-grid-item"><span class="c-front-grid-lbl">Roll No</span><span class="c-front-grid-val">${student.RollNo}</span></div>
-                                        <div class="c-front-grid-item"><span class="c-front-grid-lbl">House</span><span class="c-front-grid-val">${studentHouse.toUpperCase()}</span></div>
+                                        <div class="c-front-grid-item"><span class="c-front-grid-lbl">House</span><span class="c-front-grid-val house-value">${studentHouse.toUpperCase()}</span></div>
                                         <div class="c-front-grid-item"><span class="c-front-grid-lbl">Blood Grp</span><span class="c-front-grid-val">${student.BloodGroup}</span></div>
                                         <div class="c-front-grid-item"><span class="c-front-grid-lbl">Course Year</span><span class="c-front-grid-val">${student.StartYear} - ${student.EndYear}</span></div>
                                     </div>
@@ -2027,6 +2150,8 @@
                         <div class="card-side active" style="z-index: 5;">
                             <div class="card-glow-border"></div>
                             <div class="card-grid-pattern"></div>
+                            <div class="card-graphic-bg"></div>
+                            <div class="card-graphic-bg-left"></div>
                             <div class="card-content">
                                 <div class="c-back-header">
                                     <h3>${appData.settings.CollegeName}</h3>
@@ -2103,38 +2228,74 @@
             ]);
 
             if (isFrontActive) {
-                const bg = ctx.createLinearGradient(0, 0, 0, H);
-                bg.addColorStop(0, '#09091c'); bg.addColorStop(0.5, '#0d0c29'); bg.addColorStop(1, '#060514');
-                ctx.fillStyle = bg;
+                // Background: Solid white
+                ctx.fillStyle = '#ffffff';
                 ctx.roundRect(0, 0, W, H, 40); ctx.fill();
 
+                // Draw graphic background wedges
+                ctx.fillStyle = hColor;
+                ctx.globalAlpha = 0.08;
+                ctx.beginPath();
+                ctx.moveTo(W, H * 0.75);
+                ctx.lineTo(W * 0.5, H);
+                ctx.lineTo(W, H);
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.globalAlpha = 0.05;
+                ctx.beginPath();
+                ctx.moveTo(0, H * 0.85);
+                ctx.lineTo(0, H);
+                ctx.lineTo(W * 0.3, H);
+                ctx.closePath();
+                ctx.fill();
+                ctx.globalAlpha = 1.0; // Reset alpha
+
+                // Draw solid border in house color
                 ctx.strokeStyle = hColor;
                 ctx.lineWidth = 8;
                 ctx.roundRect(4, 4, W-8, H-8, 38); ctx.stroke();
 
-                ctx.fillStyle = 'rgba(255,255,255,0.015)';
+                // Draw grid pattern
+                ctx.fillStyle = 'rgba(148, 163, 184, 0.08)';
                 for (let x = 20; x < W; x += 30) {
                     for (let y = 20; y < H; y += 30) {
+                        if (y < 160) continue; // Skip header area
                         ctx.beginPath(); ctx.arc(x, y, 2, 0, Math.PI*2); ctx.fill();
                     }
                 }
+
+                // Header Banner (Navy to House Color Gradient)
+                const headerGrad = ctx.createLinearGradient(0, 0, W, 0);
+                headerGrad.addColorStop(0, '#1e1b4b');
+                headerGrad.addColorStop(1, hColor);
+                
+                ctx.save();
+                ctx.beginPath();
+                ctx.roundRect(0, 0, W, H, 40); // clip
+                ctx.clip();
+                ctx.fillStyle = headerGrad;
+                ctx.fillRect(0, 0, W, 160);
+                ctx.restore();
+
+                // Header bottom line
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+                ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.moveTo(0, 160); ctx.lineTo(W, 160); ctx.stroke();
 
                 if (logo) {
                     ctx.save(); ctx.beginPath(); ctx.arc(75, 90, 45, 0, Math.PI*2); ctx.clip();
                     ctx.drawImage(logo, 30, 45, 90, 90); ctx.restore();
                     ctx.beginPath(); ctx.arc(75, 90, 45, 0, Math.PI*2);
-                    ctx.strokeStyle = 'rgba(255,255,255,0.1)'; ctx.lineWidth = 2; ctx.stroke();
+                    ctx.strokeStyle = 'rgba(255,255,255,0.8)'; ctx.lineWidth = 2; ctx.stroke();
                 }
 
                 ctx.fillStyle = '#ffffff'; ctx.textAlign = 'left';
                 ctx.font = '800 26px Outfit, Arial';
                 ctx.fillText(collegeName.substring(0, 32), 140, 85);
                 ctx.font = '600 13px Inter, Arial';
-                ctx.fillStyle = '#94a3b8';
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
                 ctx.fillText(collegeAddr.substring(0, 50), 140, 110);
-
-                ctx.strokeStyle = 'rgba(255,255,255,0.08)'; ctx.lineWidth = 2;
-                ctx.beginPath(); ctx.moveTo(30, 160); ctx.lineTo(W-30, 160); ctx.stroke();
 
                 if (photo) {
                     ctx.save(); ctx.beginPath();
@@ -2144,63 +2305,99 @@
                     ctx.roundRect(194, 190, 250, 320, 24); ctx.stroke();
                 }
 
-                ctx.fillStyle = '#ffffff'; ctx.textAlign = 'center';
+                ctx.fillStyle = '#0f172a'; ctx.textAlign = 'center';
                 ctx.font = '800 38px Outfit, Arial';
                 ctx.fillText(name, W/2, 560);
                 
                 ctx.font = '700 20px Inter, Arial';
-                ctx.fillStyle = hColor;
+                ctx.fillStyle = '#475569';
                 ctx.fillText(dept, W/2, 595);
 
                 const gridY = 640;
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.02)';
+                ctx.fillStyle = '#f8fafc';
                 ctx.roundRect(40, gridY, W-80, 160, 16); ctx.fill();
-                ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)'; ctx.lineWidth = 1;
+                ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 2;
                 ctx.roundRect(40, gridY, W-80, 160, 16); ctx.stroke();
 
                 ctx.textAlign = 'left';
-                ctx.fillStyle = '#94a3b8'; ctx.font = '700 13px Inter'; ctx.fillText("ROLL NO", 70, gridY + 45);
-                ctx.fillStyle = '#ffffff'; ctx.font = '700 18px Inter'; ctx.fillText(roll, 70, gridY + 70);
-                ctx.fillStyle = '#94a3b8'; ctx.font = '700 13px Inter'; ctx.fillText("HOUSE", 70, gridY + 110);
-                ctx.fillStyle = '#ffffff'; ctx.font = '700 18px Inter'; ctx.fillText(houseName.toUpperCase(), 70, gridY + 135);
+                ctx.fillStyle = '#64748b'; ctx.font = '700 13px Inter'; ctx.fillText("ROLL NO", 70, gridY + 45);
+                ctx.fillStyle = '#0f172a'; ctx.font = '700 18px Inter'; ctx.fillText(roll, 70, gridY + 70);
+                ctx.fillStyle = '#64748b'; ctx.font = '700 13px Inter'; ctx.fillText("HOUSE", 70, gridY + 110);
+                ctx.fillStyle = hColor; ctx.font = '700 18px Inter'; ctx.fillText(houseName.toUpperCase(), 70, gridY + 135);
 
-                ctx.fillStyle = '#94a3b8'; ctx.font = '700 13px Inter'; ctx.fillText("BLOOD GRP", W/2 + 30, gridY + 45);
-                ctx.fillStyle = '#ffffff'; ctx.font = '700 18px Inter'; ctx.fillText(blood, W/2 + 30, gridY + 70);
-                ctx.fillStyle = '#94a3b8'; ctx.font = '700 13px Inter'; ctx.fillText("COURSE YEAR", W/2 + 30, gridY + 110);
-                ctx.fillStyle = '#ffffff'; ctx.font = '700 18px Inter'; ctx.fillText(years, W/2 + 30, gridY + 135);
+                ctx.fillStyle = '#64748b'; ctx.font = '700 13px Inter'; ctx.fillText("BLOOD GRP", W/2 + 30, gridY + 45);
+                ctx.fillStyle = '#0f172a'; ctx.font = '700 18px Inter'; ctx.fillText(blood, W/2 + 30, gridY + 70);
+                ctx.fillStyle = '#64748b'; ctx.font = '700 13px Inter'; ctx.fillText("COURSE YEAR", W/2 + 30, gridY + 110);
+                ctx.fillStyle = '#0f172a'; ctx.font = '700 18px Inter'; ctx.fillText(years, W/2 + 30, gridY + 135);
 
-                ctx.strokeStyle = 'rgba(255,255,255,0.08)'; ctx.lineWidth = 2;
+                ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 2;
                 ctx.beginPath(); ctx.moveTo(30, 840); ctx.lineTo(W-30, 840); ctx.stroke();
 
                 if (signature) {
                     ctx.drawImage(signature, 50, 860, 170, 60);
                 }
-                ctx.fillStyle = '#94a3b8'; ctx.font = '700 12px Inter'; ctx.textAlign = 'left';
+                ctx.fillStyle = '#64748b'; ctx.font = '700 12px Inter'; ctx.textAlign = 'left';
                 ctx.fillText("PRINCIPAL", 50, 940);
 
                 const qrCanvas = document.querySelector('#card-qr-box canvas');
                 if (qrCanvas) {
                     ctx.fillStyle = '#ffffff';
                     ctx.roundRect(W-200, 855, 140, 140, 10); ctx.fill();
+                    ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 2;
+                    ctx.roundRect(W-200, 855, 140, 140, 10); ctx.stroke();
                     ctx.drawImage(qrCanvas, W-190, 865, 120, 120);
                 }
 
             } else {
-                const bg = ctx.createLinearGradient(0, 0, 0, H);
-                bg.addColorStop(0, '#09091c'); bg.addColorStop(0.5, '#0d0c29'); bg.addColorStop(1, '#060514');
-                ctx.fillStyle = bg;
+                // Background: Solid white
+                ctx.fillStyle = '#ffffff';
                 ctx.roundRect(0, 0, W, H, 40); ctx.fill();
 
+                // Draw graphic background wedges
+                ctx.fillStyle = hColor;
+                ctx.globalAlpha = 0.08;
+                ctx.beginPath();
+                ctx.moveTo(W, H * 0.75);
+                ctx.lineTo(W * 0.5, H);
+                ctx.lineTo(W, H);
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.globalAlpha = 0.05;
+                ctx.beginPath();
+                ctx.moveTo(0, H * 0.85);
+                ctx.lineTo(0, H);
+                ctx.lineTo(W * 0.3, H);
+                ctx.closePath();
+                ctx.fill();
+                ctx.globalAlpha = 1.0; // Reset alpha
+
+                // Draw solid border in house color
                 ctx.strokeStyle = hColor;
                 ctx.lineWidth = 8;
                 ctx.roundRect(4, 4, W-8, H-8, 38); ctx.stroke();
 
+                // Header Banner (Navy to House Color Gradient)
+                const headerGrad = ctx.createLinearGradient(0, 0, W, 0);
+                headerGrad.addColorStop(0, '#1e1b4b');
+                headerGrad.addColorStop(1, hColor);
+                
+                ctx.save();
+                ctx.beginPath();
+                ctx.roundRect(0, 0, W, H, 40); // clip
+                ctx.clip();
+                ctx.fillStyle = headerGrad;
+                ctx.fillRect(0, 0, W, 120);
+                ctx.restore();
+
+                // Header bottom line
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+                ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.moveTo(0, 120); ctx.lineTo(W, 120); ctx.stroke();
+
                 ctx.fillStyle = '#ffffff'; ctx.textAlign = 'center';
                 ctx.font = '800 24px Outfit, Arial';
-                ctx.fillText(collegeName, W/2, 80);
-
-                ctx.strokeStyle = 'rgba(255,255,255,0.08)'; ctx.lineWidth = 2;
-                ctx.beginPath(); ctx.moveTo(30, 110); ctx.lineTo(W-30, 110); ctx.stroke();
+                ctx.fillText(collegeName, W/2, 70);
 
                 if (founder) {
                     ctx.save(); ctx.beginPath(); ctx.arc(W/2, 230, 75, 0, Math.PI*2); ctx.clip();
@@ -2209,27 +2406,27 @@
                     ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 4; ctx.stroke();
                 }
 
-                ctx.fillStyle = '#94a3b8'; ctx.font = 'italic 600 16px Inter';
+                ctx.fillStyle = '#475569'; ctx.font = 'italic 600 16px Inter'; ctx.textAlign = 'center';
                 ctx.fillText(`"${founderQuote}"`, W/2, 360);
 
                 const addrY = 460;
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.02)';
+                ctx.fillStyle = '#f8fafc';
                 ctx.roundRect(50, addrY, W-100, 220, 16); ctx.fill();
-                ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+                ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 2;
                 ctx.roundRect(50, addrY, W-100, 220, 16); ctx.stroke();
 
                 ctx.fillStyle = hColor; ctx.font = '700 14px Inter'; ctx.textAlign = 'left';
                 ctx.fillText("STUDENT ADDRESS", 80, addrY + 35);
                 
-                ctx.fillStyle = '#ffffff'; ctx.font = '600 16px Inter';
+                ctx.fillStyle = '#0f172a'; ctx.font = '600 16px Inter';
                 wrapText(ctx, address, 80, addrY + 65, W - 160, 24);
 
                 ctx.fillStyle = hColor; ctx.font = '700 14px Inter';
                 ctx.fillText("PHONE NUMBER", 80, addrY + 145);
-                ctx.fillStyle = '#ffffff'; ctx.font = '600 16px Inter';
+                ctx.fillStyle = '#0f172a'; ctx.font = '600 16px Inter';
                 ctx.fillText(phone, 80, addrY + 175);
 
-                ctx.strokeStyle = 'rgba(255,255,255,0.08)'; ctx.lineWidth = 2;
+                ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 2;
                 ctx.beginPath(); ctx.moveTo(30, 880); ctx.lineTo(W-30, 880); ctx.stroke();
 
                 ctx.fillStyle = '#ef4444'; ctx.font = '700 16px Inter'; ctx.textAlign = 'center';
