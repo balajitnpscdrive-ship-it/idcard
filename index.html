@@ -1,0 +1,2406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>High-Graphics Student ID Card System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+    <style>
+        :root {
+            --bg-dark: #05050f;
+            --bg-card: rgba(13, 13, 33, 0.7);
+            --border-glass: rgba(255, 255, 255, 0.08);
+            --border-glow: rgba(99, 102, 241, 0.4);
+            --accent-primary: #6366f1;
+            --accent-glow: linear-gradient(135deg, #6366f1, #a855f7, #ec4899);
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --house-color: #10b981; /* Default House color */
+            
+            /* Card Spec Constants */
+            --card-width: 53.98mm;
+            --card-height: 85.6mm;
+            --card-scale: 4.8; /* Scales mm to pixels for display previews */
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Ambient background glow */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            pointer-events: none;
+            background: 
+                radial-gradient(circle at 15% 15%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 85% 85%, rgba(236, 72, 153, 0.12) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(168, 85, 247, 0.08) 0%, transparent 60%);
+        }
+
+        /* ── HEADER ── */
+        header {
+            background: rgba(5, 5, 15, 0.85);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-glass);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            padding: 15px 25px;
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--accent-glow);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.4);
+        }
+
+        .brand-title h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 18px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            background: linear-gradient(to right, #fff, #94a3b8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .brand-title p {
+            font-size: 11px;
+            color: var(--text-secondary);
+            font-weight: 500;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .api-setup-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-glass);
+            padding: 6px 12px;
+            border-radius: 30px;
+        }
+
+        .api-setup-bar label {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .api-setup-bar input {
+            background: transparent;
+            border: none;
+            color: #fff;
+            font-size: 12px;
+            outline: none;
+            width: 280px;
+            font-family: monospace;
+        }
+
+        .api-setup-bar button {
+            background: var(--accent-primary);
+            color: #fff;
+            border: none;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .api-setup-bar button:hover {
+            box-shadow: 0 0 10px rgba(99, 102, 241, 0.5);
+        }
+
+        /* ── LAYOUT ── */
+        .app-container {
+            max-width: 1400px;
+            margin: 30px auto;
+            padding: 0 25px;
+            display: grid;
+            grid-template-columns: 460px 1fr;
+            gap: 30px;
+            flex-grow: 1;
+            align-items: start;
+        }
+
+        @media (max-width: 1100px) {
+            .app-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Panels Shared Styling */
+        .glass-panel {
+            background: var(--bg-card);
+            border: 1px solid var(--border-glass);
+            border-radius: 24px;
+            padding: 25px;
+            backdrop-filter: blur(15px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        /* ── CONTROL PANEL ── */
+        .control-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+
+        .tab-menu {
+            display: flex;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 4px;
+            border-radius: 14px;
+            border: 1px solid var(--border-glass);
+        }
+
+        .tab-btn {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-family: inherit;
+            font-weight: 600;
+            font-size: 12px;
+            padding: 10px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .tab-btn.active {
+            background: var(--accent-primary);
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        h2.panel-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 18px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-left: 4px solid var(--accent-primary);
+            padding-left: 10px;
+        }
+
+        /* Forms styling */
+        .form-group {
+            margin-bottom: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-secondary);
+        }
+
+        .form-group input, .form-group select, .form-group textarea {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--border-glass);
+            border-radius: 12px;
+            padding: 11px 15px;
+            color: #fff;
+            font-family: inherit;
+            font-size: 13px;
+            outline: none;
+            transition: 0.2s;
+        }
+
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 10px rgba(99, 102, 241, 0.15);
+        }
+
+        .form-group input::placeholder {
+            color: rgba(255, 255, 255, 0.2);
+        }
+
+        .row-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        /* Buttons styling */
+        .btn {
+            background: var(--accent-primary);
+            color: #fff;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 5px 15px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(1px);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-sec {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-glass);
+            color: var(--text-primary);
+        }
+
+        .btn-sec:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: none;
+        }
+
+        .btn-danger {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            color: #ef4444;
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            background: rgba(239, 68, 68, 0.3);
+            box-shadow: 0 5px 15px rgba(239, 68, 68, 0.3);
+        }
+
+        /* Photo Capture Area */
+        .photo-capture-box {
+            border: 2px dashed var(--border-glass);
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.2);
+            position: relative;
+        }
+
+        .photo-capture-box.dragging {
+            border-color: var(--accent-primary);
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        .photo-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            justify-content: center;
+        }
+
+        .photo-preview-thumb {
+            width: 80px;
+            height: 80px;
+            border-radius: 12px;
+            object-fit: cover;
+            border: 2px solid var(--accent-primary);
+            margin: 0 auto 10px;
+            display: block;
+            background: #111;
+        }
+
+        /* Student List Table styling */
+        .list-container {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid var(--border-glass);
+            border-radius: 12px;
+        }
+
+        .student-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            border-bottom: 1px solid var(--border-glass);
+            cursor: pointer;
+            transition: 0.2s;
+            gap: 12px;
+        }
+
+        .student-item:hover, .student-item.selected {
+            background: rgba(99, 102, 241, 0.08);
+        }
+
+        .student-item.selected {
+            border-left: 4px solid var(--accent-primary);
+        }
+
+        .student-item-img {
+            width: 40px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 6px;
+            background: #111;
+            border: 1px solid var(--border-glass);
+        }
+
+        .student-item-info {
+            flex-grow: 1;
+        }
+
+        .student-item-name {
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .student-item-meta {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        /* ── PREVIEW PANEL ── */
+        .preview-pane {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .preview-controls {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .card-view-switch {
+            display: flex;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-glass);
+            padding: 3px;
+            border-radius: 10px;
+        }
+
+        .card-view-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            padding: 6px 15px;
+            font-size: 12px;
+            font-weight: 700;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .card-view-btn.active {
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+        }
+
+        /* ── THE VERTICAL ID CARD ── */
+        .id-card-wrapper {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            flex-wrap: wrap;
+            perspective: 1000px; /* For 3D rotation effects */
+        }
+
+        .id-card-canvas-container {
+            width: calc(var(--card-width) * var(--card-scale));
+            height: calc(var(--card-height) * var(--card-scale));
+            border-radius: calc(3.5mm * var(--card-scale));
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1), box-shadow 0.6s;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6), 0 0 30px rgba(99, 102, 241, 0.1);
+            overflow: hidden;
+            background: #090915;
+            user-select: none;
+        }
+
+        /* Shimmer overlay reflection */
+        .id-card-canvas-container::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.03) 40%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0) 60%, rgba(255,255,255,0) 100%);
+            transform: translateX(-100%) translateY(-100%) rotate(45deg);
+            transition: transform 0.6s ease;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .id-card-canvas-container:hover::after {
+            transform: translateX(100%) translateY(100%) rotate(45deg);
+        }
+
+        /* Dual side templates */
+        .card-side {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            padding: calc(4mm * var(--card-scale));
+            box-sizing: border-box;
+            background: linear-gradient(145deg, #09091c 0%, #0d0c29 50%, #060514 100%);
+        }
+
+        /* Dynamic House Glow Border */
+        .card-glow-border {
+            position: absolute;
+            inset: 0;
+            border-radius: calc(3.5mm * var(--card-scale));
+            border: calc(0.6mm * var(--card-scale)) solid transparent;
+            background: linear-gradient(#080816, #0d0c24) padding-box,
+                        linear-gradient(180deg, var(--house-color) 0%, rgba(99,102,241,0.2) 60%, var(--house-color) 100%) border-box;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .card-grid-pattern {
+            position: absolute;
+            inset: 0;
+            background-image: 
+                radial-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(rgba(99, 102, 241, 0.02) 1px, transparent 1px);
+            background-size: calc(3mm * var(--card-scale)) calc(3mm * var(--card-scale)), 100% calc(8mm * var(--card-scale));
+            z-index: 1;
+            opacity: 0.8;
+            pointer-events: none;
+        }
+
+        .card-content {
+            position: relative;
+            z-index: 2;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        /* ── FRONT SIDE ── */
+        .c-front-header {
+            display: flex;
+            align-items: center;
+            gap: calc(2mm * var(--card-scale));
+            border-bottom: calc(0.2mm * var(--card-scale)) solid rgba(255, 255, 255, 0.08);
+            padding-bottom: calc(1.5mm * var(--card-scale));
+        }
+
+        .c-front-logo {
+            width: calc(8mm * var(--card-scale));
+            height: calc(8mm * var(--card-scale));
+            border-radius: 50%;
+            object-fit: cover;
+            background: rgba(255,255,255,0.05);
+            border: calc(0.3mm * var(--card-scale)) solid rgba(255,255,255,0.2);
+        }
+
+        .c-front-college-details {
+            flex-grow: 1;
+            line-height: 1.1;
+        }
+
+        .c-front-college-name {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 800;
+            font-size: calc(2.4mm * var(--card-scale));
+            color: #fff;
+            letter-spacing: 0.1px;
+            text-transform: uppercase;
+        }
+
+        .c-front-college-addr {
+            font-size: calc(1.1mm * var(--card-scale));
+            color: var(--text-secondary);
+            font-weight: 600;
+            letter-spacing: 0.2px;
+        }
+
+        /* Middle student info details */
+        .c-front-body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: calc(2.5mm * var(--card-scale)) 0;
+            flex-grow: 1;
+            justify-content: center;
+        }
+
+        .c-front-photo-frame {
+            position: relative;
+            margin-bottom: calc(2mm * var(--card-scale));
+        }
+
+        .c-front-photo {
+            width: calc(21mm * var(--card-scale));
+            height: calc(27mm * var(--card-scale));
+            object-fit: cover;
+            border-radius: calc(2mm * var(--card-scale));
+            border: calc(0.5mm * var(--card-scale)) solid var(--house-color);
+            background: #0a0a10;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5), 0 0 10px rgba(16, 185, 129, 0.2);
+        }
+
+        .c-front-name {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 800;
+            font-size: calc(3.4mm * var(--card-scale));
+            color: #fff;
+            text-align: center;
+            letter-spacing: 0.2px;
+            text-transform: uppercase;
+            line-height: 1.1;
+            margin-bottom: calc(0.8mm * var(--card-scale));
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .c-front-dept {
+            font-size: calc(1.7mm * var(--card-scale));
+            color: var(--house-color);
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            text-align: center;
+            margin-bottom: calc(2mm * var(--card-scale));
+        }
+
+        /* Student Grid details */
+        .c-front-details-grid {
+            width: 100%;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            row-gap: calc(1mm * var(--card-scale));
+            column-gap: calc(2mm * var(--card-scale));
+            background: rgba(255, 255, 255, 0.02);
+            border: calc(0.2mm * var(--card-scale)) solid rgba(255, 255, 255, 0.05);
+            border-radius: calc(1.5mm * var(--card-scale));
+            padding: calc(1.5mm * var(--card-scale));
+            margin-bottom: calc(2mm * var(--card-scale));
+        }
+
+        .c-front-grid-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .c-front-grid-lbl {
+            font-size: calc(1mm * var(--card-scale));
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.2px;
+        }
+
+        .c-front-grid-val {
+            font-size: calc(1.5mm * var(--card-scale));
+            font-weight: 700;
+            color: #fff;
+        }
+
+        /* Front Footer: Signature + QR */
+        .c-front-footer {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            border-top: calc(0.2mm * var(--card-scale)) solid rgba(255, 255, 255, 0.08);
+            padding-top: calc(1.5mm * var(--card-scale));
+        }
+
+        .c-front-sig-wrap {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .c-front-sig-img {
+            height: calc(5.5mm * var(--card-scale));
+            max-width: calc(22mm * var(--card-scale));
+            object-fit: contain;
+            filter: brightness(1.2) contrast(1.2);
+            margin-bottom: calc(0.5mm * var(--card-scale));
+            opacity: 0.85;
+        }
+
+        .c-front-sig-title {
+            font-size: calc(1mm * var(--card-scale));
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .c-front-qr-wrap {
+            background: #fff;
+            padding: calc(0.8mm * var(--card-scale));
+            border-radius: calc(1mm * var(--card-scale));
+            width: calc(14mm * var(--card-scale));
+            height: calc(14mm * var(--card-scale));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        .c-front-qr-wrap canvas, .c-front-qr-wrap img {
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        /* ── BACK SIDE ── */
+        .c-back-header {
+            text-align: center;
+            border-bottom: calc(0.2mm * var(--card-scale)) solid rgba(255, 255, 255, 0.08);
+            padding-bottom: calc(1.5mm * var(--card-scale));
+        }
+
+        .c-back-header h3 {
+            font-family: 'Outfit', sans-serif;
+            font-size: calc(2.2mm * var(--card-scale));
+            font-weight: 800;
+            text-transform: uppercase;
+            color: #fff;
+        }
+
+        .c-back-body {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: calc(2.5mm * var(--card-scale)) 0;
+            gap: calc(1.5mm * var(--card-scale));
+        }
+
+        .c-back-founder-frame {
+            position: relative;
+        }
+
+        .c-back-founder-pic {
+            width: calc(16mm * var(--card-scale));
+            height: calc(16mm * var(--card-scale));
+            border-radius: 50%;
+            object-fit: cover;
+            border: calc(0.5mm * var(--card-scale)) solid #fbbf24; /* Golden frame */
+            background: #0a0a10;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+        }
+
+        .c-back-founder-quote {
+            font-size: calc(1.25mm * var(--card-scale));
+            font-style: italic;
+            color: var(--text-secondary);
+            text-align: center;
+            max-width: 90%;
+            line-height: 1.3;
+            font-weight: 500;
+            position: relative;
+            padding: 0 calc(2mm * var(--card-scale));
+        }
+
+        .c-back-founder-quote::before, .c-back-founder-quote::after {
+            content: '"';
+            font-size: calc(3mm * var(--card-scale));
+            color: #fbbf24;
+            font-family: serif;
+            position: absolute;
+        }
+        .c-back-founder-quote::before { left: calc(-1mm * var(--card-scale)); top: calc(-1mm * var(--card-scale)); }
+        .c-back-founder-quote::after { right: calc(-1mm * var(--card-scale)); bottom: calc(-2mm * var(--card-scale)); }
+
+        .c-back-address-block {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.02);
+            border: calc(0.2mm * var(--card-scale)) solid rgba(255, 255, 255, 0.05);
+            border-radius: calc(1.5mm * var(--card-scale));
+            padding: calc(1.5mm * var(--card-scale));
+            display: flex;
+            flex-direction: column;
+            gap: calc(1mm * var(--card-scale));
+        }
+
+        .c-back-addr-title {
+            font-size: calc(1mm * var(--card-scale));
+            font-weight: 700;
+            color: var(--house-color);
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .c-back-addr-val {
+            font-size: calc(1.15mm * var(--card-scale));
+            color: #fff;
+            line-height: 1.25;
+            font-weight: 600;
+        }
+
+        .c-back-footer {
+            border-top: calc(0.2mm * var(--card-scale)) solid rgba(255, 255, 255, 0.08);
+            padding-top: calc(1.5mm * var(--card-scale));
+            text-align: center;
+        }
+
+        .c-back-emergency {
+            font-size: calc(1.25mm * var(--card-scale));
+            font-weight: 700;
+            color: #ef4444; /* High visibility red */
+            letter-spacing: 0.2px;
+            text-transform: uppercase;
+        }
+
+        /* ── CAMERA MODAL ── */
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(10px);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background: #0c0c1e;
+            border: 1px solid var(--border-glass);
+            border-radius: 20px;
+            padding: 25px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .video-container {
+            width: 320px;
+            height: 400px;
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #000;
+            border: 2px solid var(--accent-primary);
+        }
+
+        #webcam-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* Face cropping circle guide overlay */
+        .crop-overlay {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            border: 2px solid transparent;
+            background: radial-gradient(circle 120px at center, transparent 99%, rgba(0, 0, 0, 0.6) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .crop-overlay::after {
+            content: '';
+            width: 240px;
+            height: 300px;
+            border: 2px dashed rgba(255, 255, 255, 0.4);
+            border-radius: 12px;
+            position: absolute;
+        }
+
+        /* ── PRINTING GRID SYSTEM ── */
+        #print-grid-container {
+            display: none;
+        }
+
+        @media print {
+            /* Reset body styles for pure printing */
+            body {
+                background: #fff !important;
+                color: #000 !important;
+                min-height: 0;
+                overflow: visible;
+            }
+
+            body::before, header, .app-container, .modal {
+                display: none !important;
+            }
+
+            #print-grid-container {
+                display: block !important;
+                width: 210mm; /* A4 Width */
+                margin: 0;
+                padding: 10mm;
+                box-sizing: border-box;
+                background: #fff !important;
+            }
+
+            .print-page {
+                page-break-after: always;
+                display: grid;
+                grid-template-columns: 1fr 1fr; /* 2 Columns of cards */
+                grid-auto-rows: var(--card-height);
+                row-gap: 8mm;
+                column-gap: 10mm;
+                justify-content: center;
+                align-content: start;
+                width: 190mm;
+                margin: 0 auto;
+                background: #fff !important;
+            }
+
+            /* Portrait vertical print size */
+            .print-card-box {
+                width: var(--card-width);
+                height: var(--card-height);
+                position: relative;
+                box-sizing: border-box;
+                background: transparent !important;
+                page-break-inside: avoid;
+                margin: 0 auto;
+            }
+
+            /* Override card preview scale to standard print size */
+            .print-card-box .id-card-canvas-container {
+                width: 100% !important;
+                height: 100% !important;
+                border-radius: 3.5mm !important;
+                box-shadow: none !important;
+                border: none !important;
+                transform: none !important;
+                animation: none !important;
+            }
+
+            .print-card-box .card-glow-border {
+                border-radius: 3.5mm !important;
+                border: 0.5mm solid var(--house-color) !important; /* Normal solid border for printing */
+                background: none !important;
+            }
+
+            .print-card-box .card-side {
+                padding: 4mm !important;
+                border-radius: 3.5mm !important;
+                background: linear-gradient(145deg, #09091c 0%, #0d0c29 50%, #060514 100%) !important;
+                print-color-adjust: exact;
+                -webkit-print-color-adjust: exact;
+            }
+
+            /* Scale elements correctly for printing */
+            .print-card-box .c-front-header {
+                gap: 2mm !important;
+                border-bottom-width: 0.2mm !important;
+                padding-bottom: 1.5mm !important;
+            }
+            .print-card-box .c-front-logo {
+                width: 8mm !important;
+                height: 8mm !important;
+                border-width: 0.3mm !important;
+            }
+            .print-card-box .c-front-college-name {
+                font-size: 2.4mm !important;
+            }
+            .print-card-box .c-front-college-addr {
+                font-size: 1.1mm !important;
+            }
+            .print-card-box .c-front-body {
+                margin: 2.5mm 0 !important;
+            }
+            .print-card-box .c-front-photo {
+                width: 21mm !important;
+                height: 27mm !important;
+                border-width: 0.5mm !important;
+            }
+            .print-card-box .c-front-name {
+                font-size: 3.4mm !important;
+                margin-bottom: 0.8mm !important;
+            }
+            .print-card-box .c-front-dept {
+                font-size: 1.7mm !important;
+                margin-bottom: 2mm !important;
+            }
+            .print-card-box .c-front-details-grid {
+                row-gap: 1mm !important;
+                column-gap: 2mm !important;
+                border-width: 0.2mm !important;
+                border-radius: 1.5mm !important;
+                padding: 1.5mm !important;
+                margin-bottom: 2mm !important;
+            }
+            .print-card-box .c-front-grid-lbl {
+                font-size: 1mm !important;
+            }
+            .print-card-box .c-front-grid-val {
+                font-size: 1.5mm !important;
+            }
+            .print-card-box .c-front-footer {
+                border-top-width: 0.2mm !important;
+                padding-top: 1.5mm !important;
+            }
+            .print-card-box .c-front-sig-img {
+                height: 5.5mm !important;
+                max-width: 22mm !important;
+            }
+            .print-card-box .c-front-sig-title {
+                font-size: 1mm !important;
+            }
+            .print-card-box .c-front-qr-wrap {
+                padding: 0.8mm !important;
+                border-radius: 1mm !important;
+                width: 14mm !important;
+                height: 14mm !important;
+            }
+
+            /* Back side card scaling overrides */
+            .print-card-box .c-back-header {
+                border-bottom-width: 0.2mm !important;
+                padding-bottom: 1.5mm !important;
+            }
+            .print-card-box .c-back-header h3 {
+                font-size: 2.2mm !important;
+            }
+            .print-card-box .c-back-body {
+                margin: 2.5mm 0 !important;
+                gap: 1.5mm !important;
+            }
+            .print-card-box .c-back-founder-pic {
+                width: 16mm !important;
+                height: 16mm !important;
+                border-width: 0.5mm !important;
+            }
+            .print-card-box .c-back-founder-quote {
+                font-size: 1.25mm !important;
+                padding: 0 2mm !important;
+            }
+            .print-card-box .c-back-founder-quote::before, 
+            .print-card-box .c-back-founder-quote::after {
+                font-size: 3mm !important;
+            }
+            .print-card-box .c-back-address-block {
+                border-width: 0.2mm !important;
+                border-radius: 1.5mm !important;
+                padding: 1.5mm !important;
+                gap: 1mm !important;
+            }
+            .print-card-box .c-back-addr-title {
+                font-size: 1mm !important;
+            }
+            .print-card-box .c-back-addr-val {
+                font-size: 1.15mm !important;
+            }
+            .print-card-box .c-back-footer {
+                border-top-width: 0.2mm !important;
+                padding-top: 1.5mm !important;
+            }
+            .print-card-box .c-back-emergency {
+                font-size: 1.25mm !important;
+            }
+
+            /* Mirroring Back side columns for perfect duplex printer alignment */
+            /* Row of 2 fronts: Front A [Left]  | Front B [Right] */
+            /* Row of 2 backs must print: Back B [Left] | Back A [Right] so they match when paper is flipped */
+            .print-page-backs {
+                direction: rtl; /* Reverses horizontal grid columns */
+            }
+            .print-page-backs .print-card-box {
+                direction: ltr; /* Keeps card content readable */
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-content">
+            <div class="brand">
+                <div class="brand-icon">🪪</div>
+                <div class="brand-title">
+                    <h1>Aesthetic Card Engine</h1>
+                    <p>High-Graphics Print Studio</p>
+                </div>
+            </div>
+
+            <div class="api-setup-bar">
+                <label>Script URL:</label>
+                <input type="text" id="api-url-input" placeholder="https://script.google.com/macros/s/AKfycbwn8AG20pC-UtNn4FVDSIM0YHdnwJXQ3ij5SEy4_kHy6QpVjLLC12sePz6_2XTY6gAW/exec">
+                <button onclick="saveApiUrl()">Save</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="app-container">
+        <!-- ── LEFT CONTROL PANEL ── -->
+        <div class="control-panel glass-panel">
+            <div class="tab-menu">
+                <button class="tab-btn active" onclick="switchTab('students')">Students</button>
+                <button class="tab-btn" onclick="switchTab('branding')">Branding</button>
+                <button class="tab-btn" onclick="switchTab('bulk')">Bulk Import</button>
+            </div>
+
+            <!-- Tab: Students -->
+            <div id="tab-students" class="tab-content active">
+                <h2 class="panel-title">Manage Student Records</h2>
+                
+                <div class="form-group">
+                    <label>Select Active Student</label>
+                    <select id="student-selector" onchange="selectStudent(this.value)">
+                        <option value="">-- Add New Student --</option>
+                    </select>
+                </div>
+
+                <hr style="border: 0; border-top: 1px solid var(--border-glass); margin: 20px 0;">
+
+                <form id="student-form" onsubmit="saveStudentForm(event)">
+                    <input type="hidden" id="stud-id">
+                    
+                    <div class="form-group">
+                        <label>Full Name</label>
+                        <input type="text" id="stud-name" placeholder="e.g. Senthil Kumar D" required oninput="syncPreview()">
+                    </div>
+
+                    <div class="row-grid">
+                        <div class="form-group">
+                            <label>Roll Number</label>
+                            <input type="text" id="stud-roll" placeholder="e.g. 24ME08" required oninput="syncPreview()">
+                        </div>
+                        <div class="form-group">
+                            <label>Department</label>
+                            <input type="text" id="stud-dept" placeholder="e.g. Mechanical" required oninput="syncPreview()">
+                        </div>
+                    </div>
+
+                    <div class="row-grid">
+                        <div class="form-group">
+                            <label>House Name</label>
+                            <select id="stud-house" required onchange="syncPreview()">
+                                <option value="Bosco" data-color="#ff0055">🏠 Bosco</option>
+                                <option value="Savio" data-color="#00d4ff">🏠 Savio</option>
+                                <option value="Ruva" data-color="#ffcc00">🏠 Ruva</option>
+                                <option value="Thomas" data-color="#00ff88">🏠 Thomas</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Blood Group</label>
+                            <select id="stud-blood" required onchange="syncPreview()">
+                                <option value="O +ve">O +ve</option>
+                                <option value="O -ve">O -ve</option>
+                                <option value="A +ve">A +ve</option>
+                                <option value="A -ve">A -ve</option>
+                                <option value="B +ve">B +ve</option>
+                                <option value="B -ve">B -ve</option>
+                                <option value="AB +ve">AB +ve</option>
+                                <option value="AB -ve">AB -ve</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row-grid">
+                        <div class="form-group">
+                            <label>Start Year</label>
+                            <input type="number" id="stud-start" placeholder="2024" required oninput="syncPreview()">
+                        </div>
+                        <div class="form-group">
+                            <label>End Year</label>
+                            <input type="number" id="stud-end" placeholder="2027" required oninput="syncPreview()">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Home Address</label>
+                        <textarea id="stud-address" rows="2" placeholder="Enter student's home address..." required oninput="syncPreview()"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Student Photo</label>
+                        <div class="photo-capture-box" id="drop-zone" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropFile(event)">
+                            <img id="photo-preview-thumbnail" class="photo-preview-thumb" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 88 110'%3E%3Crect width='88' height='110' fill='%23ffffff08'/%3E%3Ccircle cx='44' cy='38' r='22' fill='%23ffffff15'/%3E%3Cellipse cx='44' cy='90' rx='32' ry='22' fill='%23ffffff15'/%3E%3C/svg%3E">
+                            <p style="font-size: 11px; color: var(--text-secondary); margin-bottom: 10px;">Drag & drop photo, or choose action below</p>
+                            
+                            <div class="photo-actions">
+                                <button type="button" class="btn btn-sec" style="padding: 8px 12px; font-size: 11px;" onclick="document.getElementById('photo-file-input').click()">📁 File</button>
+                                <button type="button" class="btn" style="padding: 8px 12px; font-size: 11px;" onclick="openCameraModal()">📷 Camera</button>
+                            </div>
+                            <input type="file" id="photo-file-input" accept="image/*" style="display:none;" onchange="loadPhotoFromFile(this)">
+                        </div>
+                    </div>
+
+                    <div class="row-grid" style="margin-top: 10px;">
+                        <button type="submit" class="btn" id="save-student-btn">⚡ Save Record</button>
+                        <button type="button" class="btn btn-danger" id="delete-student-btn" onclick="deleteActiveStudent()" disabled>🗑️ Delete</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Tab: Branding Settings -->
+            <div id="tab-branding" class="tab-content">
+                <h2 class="panel-title">Branding & Layout Settings</h2>
+                
+                <form id="branding-form" onsubmit="saveBrandingSettings(event)">
+                    <div class="form-group">
+                        <label>College Name</label>
+                        <input type="text" id="brand-college-name" required oninput="syncPreview()">
+                    </div>
+
+                    <div class="form-group">
+                        <label>College Address</label>
+                        <textarea id="brand-college-addr" rows="2" required oninput="syncPreview()"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Founder's Inspirational Quote</label>
+                        <textarea id="brand-founder-quote" rows="2" required oninput="syncPreview()"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Emergency Contact No.</label>
+                        <input type="text" id="brand-emergency" required oninput="syncPreview()">
+                    </div>
+
+                    <hr style="border: 0; border-top: 1px solid var(--border-glass); margin: 20px 0;">
+
+                    <!-- Media Uploads -->
+                    <div class="form-group">
+                        <label>College Logo (PNG/JPEG)</label>
+                        <input type="file" accept="image/*" onchange="uploadBrandingAsset(this, 'LogoId')">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Founder Picture (PNG/JPEG)</label>
+                        <input type="file" accept="image/*" onchange="uploadBrandingAsset(this, 'FounderPicId')">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Principal Signature (PNG/JPEG)</label>
+                        <input type="file" accept="image/*" onchange="uploadBrandingAsset(this, 'PrincipalSignatureId')">
+                    </div>
+
+                    <button type="submit" class="btn btn-full" id="save-branding-btn" style="width: 100%; margin-top: 10px;">💾 Save Branding Settings</button>
+                </form>
+            </div>
+
+            <!-- Tab: Bulk Operations -->
+            <div id="tab-bulk" class="tab-content">
+                <h2 class="panel-title">Bulk Operations</h2>
+                <div class="form-group">
+                    <label>CSV File (Columns: Name, Department, HouseName, RollNo, BloodGroup, StartYear, EndYear, Address)</label>
+                    <input type="file" id="csv-file-input" accept=".csv">
+                </div>
+                <button class="btn btn-full" style="width: 100%; margin-bottom: 20px;" onclick="processBulkCSV()">📂 Process CSV File</button>
+
+                <div class="form-group">
+                    <label>Bulk Print Queue Selection</label>
+                    <div class="list-container" id="bulk-queue-list">
+                        <!-- Queue check items -->
+                    </div>
+                </div>
+                
+                <div class="row-grid">
+                    <button class="btn btn-sec" onclick="printQueue('front')">🖨️ Fronts</button>
+                    <button class="btn btn-sec" onclick="printQueue('back')">🖨️ Backs</button>
+                </div>
+                <button class="btn btn-full" style="width: 100%; margin-top: 10px;" onclick="printQueue('duplex')">🖨️ Print Selected Duplex</button>
+            </div>
+        </div>
+
+        <!-- ── RIGHT PREVIEW PANEL ── -->
+        <div class="preview-pane">
+            <div class="preview-controls glass-panel" style="padding: 15px 25px;">
+                <h3 style="font-family: 'Outfit'; font-size: 15px;">Live 3D Rendering Preview</h3>
+                
+                <div style="display: flex; gap: 15px; align-items: center;">
+                    <div class="card-view-switch">
+                        <button class="card-view-btn active" id="view-front-btn" onclick="toggleSide('front')">FRONT</button>
+                        <button class="card-view-btn" id="view-back-btn" onclick="toggleSide('back')">BACK</button>
+                    </div>
+
+                    <button class="btn" style="padding: 8px 15px; font-size: 12px;" onclick="downloadAsPNG()">💾 Download PNG</button>
+                </div>
+            </div>
+
+            <div class="id-card-wrapper">
+                <!-- ID Card 3D Object -->
+                <div class="id-card-canvas-container" id="id-card-element" onmousemove="tiltCard(event)" onmouseleave="resetTiltCard()">
+                    
+                    <!-- FRONT SIDE -->
+                    <div class="card-side" id="card-side-front" style="z-index: 5;">
+                        <div class="card-glow-border"></div>
+                        <div class="card-grid-pattern"></div>
+                        
+                        <div class="card-content">
+                            <!-- Header -->
+                            <div class="c-front-header">
+                                <img id="card-logo-img" class="c-front-logo" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Ccircle cx='20' cy='20' r='18' fill='none' stroke='%23ffffff44' stroke-width='2'/%3E%3Cpath d='M12,28 L20,12 L28,28 Z' fill='%23ffffff66'/%3E%3C/svg%3E">
+                                <div class="c-front-college-details">
+                                    <div class="c-front-college-name" id="card-college-name">COLLEGE NAME</div>
+                                    <div class="c-front-college-addr" id="card-college-addr">College Location & Address</div>
+                                </div>
+                            </div>
+
+                            <!-- Body -->
+                            <div class="c-front-body">
+                                <div class="c-front-photo-frame">
+                                    <img id="card-photo-img" class="c-front-photo" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 88 110'%3E%3Crect width='88' height='110' fill='%23ffffff08'/%3E%3Ccircle cx='44' cy='38' r='22' fill='%23ffffff15'/%3E%3Cellipse cx='44' cy='90' rx='32' ry='22' fill='%23ffffff15'/%3E%3C/svg%3E">
+                                </div>
+                                
+                                <div class="c-front-name" id="card-student-name">STUDENT NAME</div>
+                                <div class="c-front-dept" id="card-student-dept">DEPARTMENT</div>
+
+                                <div class="c-front-details-grid">
+                                    <div class="c-front-grid-item">
+                                        <span class="c-front-grid-lbl">Roll No</span>
+                                        <span class="c-front-grid-val" id="card-student-roll">-</span>
+                                    </div>
+                                    <div class="c-front-grid-item">
+                                        <span class="c-front-grid-lbl">House</span>
+                                        <span class="c-front-grid-val" id="card-student-house">-</span>
+                                    </div>
+                                    <div class="c-front-grid-item">
+                                        <span class="c-front-grid-lbl">Blood Grp</span>
+                                        <span class="c-front-grid-val" id="card-student-blood">-</span>
+                                    </div>
+                                    <div class="c-front-grid-item">
+                                        <span class="c-front-grid-lbl">Course Year</span>
+                                        <span class="c-front-grid-val" id="card-student-years">2024 - 2027</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Footer -->
+                            <div class="c-front-footer">
+                                <div class="c-front-sig-wrap">
+                                    <img id="card-signature-img" class="c-front-sig-img" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 30'%3E%3Cpath d='M10,20 Q30,5 50,22 T90,12' fill='none' stroke='%23ffffff33' stroke-width='2'/%3E%3C/svg%3E">
+                                    <span class="c-front-sig-title">Principal</span>
+                                </div>
+                                
+                                <div class="c-front-qr-wrap" id="card-qr-box">
+                                    <!-- QR code canvas gets appended here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- BACK SIDE -->
+                    <div class="card-side" id="card-side-back" style="z-index: 1;">
+                        <div class="card-glow-border"></div>
+                        <div class="card-grid-pattern"></div>
+                        
+                        <div class="card-content">
+                            <!-- Header -->
+                            <div class="c-back-header">
+                                <h3 id="card-back-college-name">COLLEGE NAME</h3>
+                            </div>
+
+                            <!-- Body -->
+                            <div class="c-back-body">
+                                <div class="c-back-founder-frame">
+                                    <img id="card-founder-img" class="c-back-founder-pic" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 60'%3E%3Ccircle cx='30' cy='30' r='28' fill='%23ffffff08'/%3E%3Ccircle cx='30' cy='22' r='10' fill='%23ffffff15'/%3E%3Cellipse cx='30' cy='48' rx='20' ry='12' fill='%23ffffff15'/%3E%3C/svg%3E">
+                                </div>
+
+                                <div class="c-back-founder-quote" id="card-founder-quote">
+                                    "Quote from founder picture goes here..."
+                                </div>
+
+                                <div class="c-back-address-block">
+                                    <span class="c-back-addr-title">Student Address</span>
+                                    <span class="c-back-addr-val" id="card-back-student-addr">-</span>
+                                </div>
+                            </div>
+
+                            <!-- Footer -->
+                            <div class="c-back-footer">
+                                <div class="c-back-emergency" id="card-back-emergency">
+                                    Emergency Contact: -
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── WEBCAM MODAL ── -->
+    <div class="modal" id="camera-modal">
+        <div class="modal-content">
+            <h3 style="font-family: 'Outfit'; font-size: 16px;">Capture Student Photo</h3>
+            <div class="video-container">
+                <video id="webcam-video" autoplay playsinline></video>
+                <div class="crop-overlay"></div>
+            </div>
+            
+            <div style="display: flex; gap: 15px; width: 100%;">
+                <button class="btn btn-sec" style="flex: 1;" onclick="closeCameraModal()">Cancel</button>
+                <button class="btn" style="flex: 1;" onclick="capturePhoto()">Capture</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── PRINT STYLES GRID CONTAINER (Populated dynamically during printing) ── -->
+    <div id="print-grid-container"></div>
+
+    <script>
+        let appData = { students: [], settings: {} };
+        let activeStudentId = null;
+        let webcamStream = null;
+        let isFrontActive = true;
+        let selectedStudentPhotoBase64 = null;
+
+        // Configuration
+        let API_URL = localStorage.getItem("ID_CARD_API_URL") || "";
+
+        window.onload = function() {
+            if (API_URL) {
+                document.getElementById('api-url-input').value = API_URL;
+                fetchInitialData();
+            } else {
+                console.log("No Apps Script URL configured. Dashboard running in demo/offline mode.");
+                loadMockData();
+            }
+            syncPreview();
+        };
+
+        function saveApiUrl() {
+            const val = document.getElementById('api-url-input').value.trim();
+            if (val) {
+                localStorage.setItem("ID_CARD_API_URL", val);
+                API_URL = val;
+                alert("Apps Script API URL saved! Re-loading data...");
+                fetchInitialData();
+            }
+        }
+
+        // --- DATA INTEGRATION ---
+        async function fetchInitialData() {
+            if (!API_URL) return;
+            try {
+                const url = API_URL + "?action=getInitialData";
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (data.error) {
+                    alert("API Error: " + data.error);
+                    return;
+                }
+                
+                appData = data;
+                populateBrandingForm(data.settings);
+                refreshStudentLists();
+            } catch (err) {
+                console.error("Failed to fetch from Apps Script API", err);
+                alert("Connection failed! Falling back to offline demo mode. Please verify the deployed URL allows 'Anyone' access and that CORS redirects are clear.");
+                loadMockData();
+            }
+        }
+
+        function loadMockData() {
+            appData = {
+                settings: {
+                    CollegeName: "DON BOSCO ACADEMY OF TECHNOLOGY",
+                    CollegeAddress: "12, Ousteri Lake road, Kuruvinampet, Pondicherry - 605502",
+                    FounderQuote: "Do not put off till tomorrow the good you can do today.",
+                    EmergencyContact: "Emergency: +91 94890 85942",
+                    LogoId: "",
+                    FounderPicId: "",
+                    PrincipalSignatureId: ""
+                },
+                students: [
+                    {
+                        StudentID: "STU0001",
+                        Name: "SENTHIL KUMAR D",
+                        Department: "Mechanical Engineering",
+                        RollNo: "24ME02",
+                        HouseName: "Savio",
+                        BloodGroup: "O +ve",
+                        StartYear: "2024",
+                        EndYear: "2027",
+                        Address: "45, Mariamman Koil Street, Mudaliarpet, Puducherry",
+                        PhotoId: ""
+                    },
+                    {
+                        StudentID: "STU0002",
+                        Name: "ALEXANDER SMITH",
+                        Department: "Computer Engineering",
+                        RollNo: "24CO15",
+                        HouseName: "Bosco",
+                        BloodGroup: "B +ve",
+                        StartYear: "2024",
+                        EndYear: "2027",
+                        Address: "12, Rose Garden, Lawspet, Puducherry",
+                        PhotoId: ""
+                    }
+                ]
+            };
+            populateBrandingForm(appData.settings);
+            refreshStudentLists();
+        }
+
+        function populateBrandingForm(settings) {
+            document.getElementById('brand-college-name').value = settings.CollegeName || "";
+            document.getElementById('brand-college-addr').value = settings.CollegeAddress || "";
+            document.getElementById('brand-founder-quote').value = settings.FounderQuote || "";
+            document.getElementById('brand-emergency').value = settings.EmergencyContact || "";
+            
+            // Set image assets based on Drive File IDs if available
+            if (settings.LogoId) {
+                document.getElementById('card-logo-img').src = "https://lh3.googleusercontent.com/d/" + settings.LogoId + "=s200";
+            }
+            if (settings.FounderPicId) {
+                document.getElementById('card-founder-img').src = "https://lh3.googleusercontent.com/d/" + settings.FounderPicId + "=s200";
+            }
+            if (settings.PrincipalSignatureId) {
+                document.getElementById('card-signature-img').src = "https://lh3.googleusercontent.com/d/" + settings.PrincipalSignatureId + "=s200";
+            }
+        }
+
+        function refreshStudentLists() {
+            // Update selector
+            const sel = document.getElementById('student-selector');
+            sel.innerHTML = '<option value="">-- Add New Student --</option>';
+            appData.students.forEach(s => {
+                const opt = new Option(`${s.Name} (${s.RollNo})`, s.StudentID);
+                sel.add(opt);
+            });
+
+            // Update bulk queue list
+            const qList = document.getElementById('bulk-queue-list');
+            qList.innerHTML = appData.students.map(s => `
+                <label class="student-item" style="cursor: pointer;">
+                    <input type="checkbox" class="queue-check" value="${s.StudentID}" style="margin-right: 10px;">
+                    <img class="student-item-img" src="${s.PhotoId ? 'https://lh3.googleusercontent.com/d/' + s.PhotoId + '=s150' : getDefaultAvatar()}">
+                    <div class="student-item-info">
+                        <div class="student-item-name">${s.Name}</div>
+                        <div class="student-item-meta">${s.RollNo} | ${s.Department}</div>
+                    </div>
+                </label>
+            `).join('');
+        }
+
+        // --- UI NAVIGATION ---
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(cont => cont.classList.remove('active'));
+            
+            // Find active tab btn and mark
+            event.target.classList.add('active');
+            document.getElementById('tab-' + tabId).classList.add('active');
+        }
+
+        function toggleSide(side) {
+            isFrontActive = (side === 'front');
+            document.getElementById('view-front-btn').classList.toggle('active', isFrontActive);
+            document.getElementById('view-back-btn').classList.toggle('active', !isFrontActive);
+            
+            const frontEl = document.getElementById('card-side-front');
+            const backEl = document.getElementById('card-side-back');
+            
+            if (isFrontActive) {
+                frontEl.style.zIndex = '5';
+                backEl.style.zIndex = '1';
+                document.getElementById('id-card-element').style.transform = '';
+            } else {
+                frontEl.style.zIndex = '1';
+                backEl.style.zIndex = '5';
+                document.getElementById('id-card-element').style.transform = 'rotateY(180deg)';
+            }
+        }
+
+        // 3D Card tilt dynamic visual effects
+        function tiltCard(e) {
+            if (!isFrontActive) return; // Only rotate 3D on front preview
+            const card = document.getElementById('id-card-element');
+            const rect = card.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            const rX = -(y - rect.height / 2) / 10;
+            const rY = (x - rect.width / 2) / 10;
+            
+            card.style.transform = `rotateX(${rX}deg) rotateY(${rY}deg) scale(1.02)`;
+        }
+
+        function resetTiltCard() {
+            const card = document.getElementById('id-card-element');
+            if (isFrontActive) {
+                card.style.transform = '';
+            } else {
+                card.style.transform = 'rotateY(180deg)';
+            }
+        }
+
+        // --- PHOTO CAPTURE & DRAG & DROP ---
+        function dragOver(e) {
+            e.preventDefault();
+            document.getElementById('drop-zone').classList.add('dragging');
+        }
+
+        function dragLeave(e) {
+            e.preventDefault();
+            document.getElementById('drop-zone').classList.remove('dragging');
+        }
+
+        function dropFile(e) {
+            e.preventDefault();
+            document.getElementById('drop-zone').classList.remove('dragging');
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                processPhotoFile(file);
+            }
+        }
+
+        function loadPhotoFromFile(input) {
+            const file = input.files[0];
+            if (file) {
+                processPhotoFile(file);
+            }
+        }
+
+        function processPhotoFile(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                selectedStudentPhotoBase64 = e.target.result;
+                document.getElementById('photo-preview-thumbnail').src = selectedStudentPhotoBase64;
+                document.getElementById('card-photo-img').src = selectedStudentPhotoBase64;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Camera capture utilities
+        async function openCameraModal() {
+            const modal = document.getElementById('camera-modal');
+            const video = document.getElementById('webcam-video');
+            
+            try {
+                webcamStream = await navigator.mediaDevices.getUserMedia({
+                    video: { width: 480, height: 600, facingMode: 'user' }
+                });
+                video.srcObject = webcamStream;
+                modal.style.display = 'flex';
+            } catch (err) {
+                alert("Could not access your camera: " + err.message);
+            }
+        }
+
+        function closeCameraModal() {
+            const modal = document.getElementById('camera-modal');
+            if (webcamStream) {
+                webcamStream.getTracks().forEach(track => track.stop());
+            }
+            modal.style.display = 'none';
+        }
+
+        function capturePhoto() {
+            const video = document.getElementById('webcam-video');
+            const canvas = document.createElement('canvas');
+            
+            // Set crop square matching oval frame
+            canvas.width = 300;
+            canvas.height = 375; // 4:5 ratio for portrait photos
+            
+            const ctx = canvas.getContext('2d');
+            
+            // Calculate center cropping
+            const cropWidth = video.videoWidth;
+            const cropHeight = (video.videoWidth * 1.25);
+            const cropX = 0;
+            const cropY = (video.videoHeight - cropHeight) / 2;
+            
+            ctx.drawImage(video, cropX, cropY, cropWidth, cropHeight, 0, 0, canvas.width, canvas.height);
+            
+            selectedStudentPhotoBase64 = canvas.toDataURL('image/jpeg', 0.9);
+            document.getElementById('photo-preview-thumbnail').src = selectedStudentPhotoBase64;
+            document.getElementById('card-photo-img').src = selectedStudentPhotoBase64;
+            
+            closeCameraModal();
+        }
+
+        // --- PREVIEW SYNCING & QR GENERATION ---
+        function syncPreview() {
+            // Read values
+            const name = (document.getElementById('stud-name').value || "Student Name").toUpperCase();
+            const dept = (document.getElementById('stud-dept').value || "Department").toUpperCase();
+            const roll = document.getElementById('stud-roll').value || "-";
+            const blood = document.getElementById('stud-blood').value || "-";
+            const start = document.getElementById('stud-start').value || "2024";
+            const end = document.getElementById('stud-end').value || "2027";
+            const address = document.getElementById('stud-address').value || "Student Home Address";
+            
+            const houseSelect = document.getElementById('stud-house');
+            const houseName = houseSelect.value || "-";
+            const houseColor = houseSelect.options[houseSelect.selectedIndex]?.dataset.color || "#10b981";
+
+            const collegeName = (document.getElementById('brand-college-name').value || "COLLEGE NAME").toUpperCase();
+            const collegeAddr = document.getElementById('brand-college-addr').value || "College Location & Address";
+            const founderQuote = document.getElementById('brand-founder-quote').value || "Founder Quote Text";
+            const emergency = document.getElementById('brand-emergency').value || "Emergency Call: -";
+
+            // Sync Front elements
+            document.getElementById('card-college-name').innerText = collegeName;
+            document.getElementById('card-college-addr').innerText = collegeAddr;
+            document.getElementById('card-student-name').innerText = name;
+            document.getElementById('card-student-dept').innerText = dept;
+            document.getElementById('card-student-roll').innerText = roll;
+            document.getElementById('card-student-house').innerText = houseName.toUpperCase();
+            document.getElementById('card-student-blood').innerText = blood;
+            document.getElementById('card-student-years').innerText = `${start} - ${end}`;
+            
+            // Update House specific color styles
+            document.documentElement.style.setProperty('--house-color', houseColor);
+
+            // Sync Back elements
+            document.getElementById('card-back-college-name').innerText = collegeName;
+            document.getElementById('card-founder-quote').innerText = `"${founderQuote}"`;
+            document.getElementById('card-back-student-addr').innerText = address;
+            document.getElementById('card-back-emergency').innerText = emergency;
+
+            // Generate HD QR code payload (Name|Dept|Roll|House|Blood)
+            const qrPayload = [name, dept, roll, houseName, blood].join("|");
+            generateHDQr(qrPayload);
+        }
+
+        function generateHDQr(text) {
+            const qrBox = document.getElementById('card-qr-box');
+            qrBox.innerHTML = '';
+            
+            // Create high-res QR canvas and scale down
+            new QRCode(qrBox, {
+                text: text,
+                width: 250,
+                height: 250,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H // Highest error correction rate (30%)
+            });
+        }
+
+        // --- SELECT STUDENT ---
+        function selectStudent(studentId) {
+            activeStudentId = studentId;
+            const delBtn = document.getElementById('delete-student-btn');
+            
+            if (!studentId) {
+                // Reset form
+                document.getElementById('student-form').reset();
+                document.getElementById('stud-id').value = "";
+                document.getElementById('photo-preview-thumbnail').src = getDefaultAvatar();
+                document.getElementById('card-photo-img').src = getDefaultAvatar();
+                selectedStudentPhotoBase64 = null;
+                delBtn.disabled = true;
+                syncPreview();
+                return;
+            }
+
+            delBtn.disabled = false;
+            const student = appData.students.find(s => s.StudentID === studentId);
+            if (student) {
+                document.getElementById('stud-id').value = student.StudentID;
+                document.getElementById('stud-name').value = student.Name;
+                document.getElementById('stud-dept').value = student.Department;
+                document.getElementById('stud-roll').value = student.RollNo;
+                document.getElementById('stud-house').value = student.HouseName;
+                document.getElementById('stud-blood').value = student.BloodGroup;
+                document.getElementById('stud-start').value = student.StartYear;
+                document.getElementById('stud-end').value = student.EndYear;
+                document.getElementById('stud-address').value = student.Address;
+
+                if (student.PhotoId) {
+                    const thumbUrl = "https://lh3.googleusercontent.com/d/" + student.PhotoId + "=s200";
+                    document.getElementById('photo-preview-thumbnail').src = thumbUrl;
+                    document.getElementById('card-photo-img').src = thumbUrl;
+                } else {
+                    document.getElementById('photo-preview-thumbnail').src = getDefaultAvatar();
+                    document.getElementById('card-photo-img').src = getDefaultAvatar();
+                }
+                
+                selectedStudentPhotoBase64 = null; // Reset local upload stream
+                syncPreview();
+            }
+        }
+
+        // --- SUBMIT SAVE STUDENT ---
+        async function saveStudentForm(e) {
+            e.preventDefault();
+            const saveBtn = document.getElementById('save-student-btn');
+            saveBtn.disabled = true;
+            saveBtn.innerText = "Saving...";
+
+            const studentData = {
+                StudentID: document.getElementById('stud-id').value || null,
+                Name: document.getElementById('stud-name').value.trim(),
+                Department: document.getElementById('stud-dept').value.trim(),
+                RollNo: document.getElementById('stud-roll').value.trim(),
+                HouseName: document.getElementById('stud-house').value,
+                BloodGroup: document.getElementById('stud-blood').value,
+                StartYear: document.getElementById('stud-start').value,
+                EndYear: document.getElementById('stud-end').value,
+                Address: document.getElementById('stud-address').value.trim(),
+                PhotoId: activeStudentId ? (appData.students.find(s => s.StudentID === activeStudentId)?.PhotoId || "") : ""
+            };
+
+            try {
+                // 1. Upload student photo to Drive if newly captured/selected
+                if (selectedStudentPhotoBase64) {
+                    const uploadRes = await apiPost("uploadAsset", {
+                        type: "student_photo",
+                        fileName: `PHOTO_${studentData.RollNo}.jpg`,
+                        base64Data: selectedStudentPhotoBase64
+                    });
+                    if (uploadRes.status === "success") {
+                        studentData.PhotoId = uploadRes.fileId;
+                    }
+                }
+
+                // 2. Save Student row details to sheet
+                const res = await apiPost("saveStudent", studentData);
+                if (res.status === "success") {
+                    alert("Student record saved successfully!");
+                    await fetchInitialData(); // Re-sync app datasets
+                    selectStudent(res.studentId);
+                } else {
+                    alert("Failed to save student details: " + res.error);
+                }
+            } catch (err) {
+                console.error(err);
+                alert("Backend API Call failed! Detailed logs: " + err.message);
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.innerText = "⚡ Save Record";
+            }
+        }
+
+        // --- DELETE STUDENT ---
+        async function deleteActiveStudent() {
+            if (!activeStudentId) return;
+            if (!confirm("Are you sure you want to delete this student record?")) return;
+
+            const delBtn = document.getElementById('delete-student-btn');
+            delBtn.disabled = true;
+            delBtn.innerText = "Deleting...";
+
+            try {
+                const res = await apiPost("deleteStudent", { StudentID: activeStudentId });
+                if (res.status === "success") {
+                    alert("Student deleted successfully!");
+                    activeStudentId = null;
+                    await fetchInitialData();
+                    selectStudent(null);
+                } else {
+                    alert("Failed to delete record: " + res.error);
+                }
+            } catch (err) {
+                alert("API Action failed: " + err.message);
+            } finally {
+                delBtn.disabled = false;
+                delBtn.innerText = "🗑️ Delete";
+            }
+        }
+
+        // --- BULK OPERATIONS ---
+        function processBulkCSV() {
+            const fileInput = document.getElementById('csv-file-input');
+            const file = fileInput.files[0];
+            if (!file) {
+                alert("Please select a CSV file first!");
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                const text = e.target.result;
+                const rows = parseCSVText(text);
+                
+                if (rows.length === 0) {
+                    alert("No valid rows detected in the CSV file.");
+                    return;
+                }
+
+                if (!confirm(`Are you sure you want to import ${rows.length} student records? This will clear the current sheet database.`)) return;
+
+                try {
+                    const res = await apiPost("bulkUploadStudents", { students: rows, startNum: 1 });
+                    if (res.status === "success") {
+                        alert(`Successfully imported ${res.count} student records!`);
+                        fetchInitialData();
+                    } else {
+                        alert("Bulk upload failed: " + res.error);
+                    }
+                } catch (err) {
+                    alert("CSV upload API failed: " + err.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function parseCSVText(text) {
+            const lines = text.split(/\r\n|\n/);
+            if (lines.length < 2) return [];
+            
+            // Map headers to fields
+            const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+            const dataRows = [];
+
+            for (let i = 1; i < lines.length; i++) {
+                if (!lines[i]) continue;
+                const cols = lines[i].split(',').map(c => c.trim().replace(/^"|"$/g, ''));
+                if (cols.length < headers.length) continue;
+                
+                const rowObj = {};
+                headers.forEach((h, index) => {
+                    rowObj[h] = cols[index] || "";
+                });
+                dataRows.push(rowObj);
+            }
+            return dataRows;
+        }
+
+        // --- BRANDING ASSET UPLOAD ---
+        async function uploadBrandingAsset(input, targetSettingKey) {
+            const file = input.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                const base64 = e.target.result;
+                try {
+                    // Upload file to Google Drive Assets
+                    const uploadRes = await apiPost("uploadAsset", {
+                        type: "branding_logo",
+                        fileName: `${targetSettingKey}_${file.name}`,
+                        base64Data: base64
+                    });
+
+                    if (uploadRes.status === "success") {
+                        const fileId = uploadRes.fileId;
+                        
+                        // Save Google Drive File ID reference to settings table
+                        const settingsUpdate = {};
+                        settingsUpdate[targetSettingKey] = fileId;
+                        await apiPost("saveSettings", settingsUpdate);
+
+                        // Update dynamic rendering immediately
+                        alert("Branding asset updated successfully!");
+                        const previewUrl = "https://lh3.googleusercontent.com/d/" + fileId + "=s200";
+                        if (targetSettingKey === "LogoId") document.getElementById('card-logo-img').src = previewUrl;
+                        if (targetSettingKey === "FounderPicId") document.getElementById('card-founder-img').src = previewUrl;
+                        if (targetSettingKey === "PrincipalSignatureId") document.getElementById('card-signature-img').src = previewUrl;
+                    } else {
+                        alert("Asset upload failed: " + uploadRes.error);
+                    }
+                } catch (err) {
+                    alert("Upload failed: " + err.message);
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // --- SUBMIT SAVE BRANDING SETTINGS ---
+        async function saveBrandingSettings(e) {
+            e.preventDefault();
+            const btn = document.getElementById('save-branding-btn');
+            btn.disabled = true;
+            btn.innerText = "Saving...";
+
+            const settings = {
+                CollegeName: document.getElementById('brand-college-name').value.trim(),
+                CollegeAddress: document.getElementById('brand-college-addr').value.trim(),
+                FounderQuote: document.getElementById('brand-founder-quote').value.trim(),
+                EmergencyContact: document.getElementById('brand-emergency').value.trim()
+            };
+
+            try {
+                const res = await apiPost("saveSettings", settings);
+                if (res.status === "success") {
+                    alert("Branding settings saved successfully!");
+                    fetchInitialData();
+                } else {
+                    alert("Failed to save settings: " + res.error);
+                }
+            } catch (err) {
+                alert("API Action failed: " + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "💾 Save Branding Settings";
+            }
+        }
+
+        // --- API POST HELPER ---
+        async function apiPost(action, payload) {
+            if (!API_URL) {
+                // If offline demo mode, mock successful local actions
+                return new Promise(resolve => {
+                    setTimeout(() => {
+                        if (action === "uploadAsset") {
+                            resolve({ status: "success", fileId: "MOCK_DRIVE_ID_" + Math.random().toString(36).substr(2, 9) });
+                        } else {
+                            resolve({ status: "success" });
+                        }
+                    }, 500);
+                });
+            }
+
+            const res = await fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify({ action: action, payload: payload })
+            });
+            return await res.json();
+        }
+
+        // --- BULK PRINTING ENGINE ---
+        function printQueue(printMode) {
+            const checkboxes = document.querySelectorAll('.queue-check:checked');
+            if (checkboxes.length === 0) {
+                alert("Please select at least one student from the queue list to print!");
+                return;
+            }
+
+            const selectedIds = Array.from(checkboxes).map(cb => cb.value);
+            const selectedStudents = appData.students.filter(s => selectedIds.includes(s.StudentID));
+
+            const printContainer = document.getElementById('print-grid-container');
+            printContainer.innerHTML = ''; // Clear container
+
+            // Construct print layout pages (Max 8 cards per page cutout)
+            const cardsPerPage = 8;
+            const pageCount = Math.ceil(selectedStudents.length / cardsPerPage);
+
+            for (let p = 0; p < pageCount; p++) {
+                const pageStudents = selectedStudents.slice(p * cardsPerPage, (p + 1) * cardsPerPage);
+
+                // Page 1: Front Sides of Cards
+                if (printMode === 'front' || printMode === 'duplex') {
+                    const frontPageEl = document.createElement('div');
+                    frontPageEl.className = 'print-page print-page-fronts';
+                    
+                    pageStudents.forEach(s => {
+                        const cardBox = createPrintCardElement(s, 'front');
+                        frontPageEl.appendChild(cardBox);
+                    });
+                    printContainer.appendChild(frontPageEl);
+                }
+
+                // Page 2: Back Sides of Cards (if Duplex mode, render next page)
+                if (printMode === 'back' || printMode === 'duplex') {
+                    const backPageEl = document.createElement('div');
+                    backPageEl.className = 'print-page print-page-backs';
+                    
+                    pageStudents.forEach(s => {
+                        const cardBox = createPrintCardElement(s, 'back');
+                        backPageEl.appendChild(cardBox);
+                    });
+                    printContainer.appendChild(backPageEl);
+                }
+            }
+
+            // Trigger window print dialog
+            window.print();
+        }
+
+        function createPrintCardElement(student, side) {
+            const cardBox = document.createElement('div');
+            cardBox.className = 'print-card-box';
+
+            // Get branding assets
+            const logoSrc = appData.settings.LogoId ? "https://lh3.googleusercontent.com/d/" + appData.settings.LogoId + "=s200" : document.getElementById('card-logo-img').src;
+            const signatureSrc = appData.settings.PrincipalSignatureId ? "https://lh3.googleusercontent.com/d/" + appData.settings.PrincipalSignatureId + "=s200" : document.getElementById('card-signature-img').src;
+            const founderSrc = appData.settings.FounderPicId ? "https://lh3.googleusercontent.com/d/" + appData.settings.FounderPicId + "=s200" : document.getElementById('card-founder-img').src;
+            const photoSrc = student.PhotoId ? "https://lh3.googleusercontent.com/d/" + student.PhotoId + "=s200" : getDefaultAvatar();
+
+            // Find House Color config
+            const houseList = [
+                { name:'Bosco', color:'#ff0055' },
+                { name:'Savio', color:'#00d4ff' },
+                { name:'Ruva', color:'#ffcc00' },
+                { name:'Thomas', color:'#00ff88' }
+            ];
+            const hColor = houseList.find(h => h.name.toLowerCase() === student.HouseName.toLowerCase())?.color || "#10b981";
+
+            if (side === 'front') {
+                cardBox.innerHTML = `
+                    <div class="id-card-canvas-container" style="--house-color: ${hColor}">
+                        <div class="card-side" style="z-index: 5;">
+                            <div class="card-glow-border"></div>
+                            <div class="card-grid-pattern"></div>
+                            <div class="card-content">
+                                <div class="c-front-header">
+                                    <img class="c-front-logo" src="${logoSrc}">
+                                    <div class="c-front-college-details">
+                                        <div class="c-front-college-name">${appData.settings.CollegeName}</div>
+                                        <div class="c-front-college-addr">${appData.settings.CollegeAddress}</div>
+                                    </div>
+                                </div>
+                                <div class="c-front-body">
+                                    <div class="c-front-photo-frame">
+                                        <img class="c-front-photo" src="${photoSrc}">
+                                    </div>
+                                    <div class="c-front-name">${student.Name}</div>
+                                    <div class="c-front-dept">${student.Department.toUpperCase()}</div>
+                                    <div class="c-front-details-grid">
+                                        <div class="c-front-grid-item"><span class="c-front-grid-lbl">Roll No</span><span class="c-front-grid-val">${student.RollNo}</span></div>
+                                        <div class="c-front-grid-item"><span class="c-front-grid-lbl">House</span><span class="c-front-grid-val">${student.HouseName.toUpperCase()}</span></div>
+                                        <div class="c-front-grid-item"><span class="c-front-grid-lbl">Blood Grp</span><span class="c-front-grid-val">${student.BloodGroup}</span></div>
+                                        <div class="c-front-grid-item"><span class="c-front-grid-lbl">Course Year</span><span class="c-front-grid-val">${student.StartYear} - ${student.EndYear}</span></div>
+                                    </div>
+                                </div>
+                                <div class="c-front-footer">
+                                    <div class="c-front-sig-wrap">
+                                        <img class="c-front-sig-img" src="${signatureSrc}">
+                                        <span class="c-front-sig-title">Principal</span>
+                                    </div>
+                                    <div class="c-front-qr-wrap" id="print-qr-${student.StudentID}"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                // Add QR code to print card asynchronously
+                setTimeout(() => {
+                    const printQrBox = document.getElementById(`print-qr-${student.StudentID}`);
+                    if (printQrBox) {
+                        new QRCode(printQrBox, {
+                            text: [student.Name, student.Department, student.RollNo, student.HouseName, student.BloodGroup].join("|"),
+                            width: 120, height: 120,
+                            colorDark: "#000000", colorLight: "#ffffff",
+                            correctLevel: QRCode.CorrectLevel.H
+                        });
+                    }
+                }, 50);
+
+            } else {
+                cardBox.innerHTML = `
+                    <div class="id-card-canvas-container" style="--house-color: ${hColor}">
+                        <div class="card-side" style="z-index: 5;">
+                            <div class="card-glow-border"></div>
+                            <div class="card-grid-pattern"></div>
+                            <div class="card-content">
+                                <div class="c-back-header">
+                                    <h3>${appData.settings.CollegeName}</h3>
+                                </div>
+                                <div class="c-back-body">
+                                    <div class="c-back-founder-frame">
+                                        <img class="c-back-founder-pic" src="${founderSrc}">
+                                    </div>
+                                    <div class="c-back-founder-quote">"${appData.settings.FounderQuote}"</div>
+                                    <div class="c-back-address-block">
+                                        <span class="c-back-addr-title">Student Address</span>
+                                        <span class="c-back-addr-val">${student.Address}</span>
+                                    </div>
+                                </div>
+                                <div class="c-back-footer">
+                                    <div class="c-back-emergency">${appData.settings.EmergencyContact}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            return cardBox;
+        }
+
+        // --- DOWNLOAD PORTRAIT AS PNG (Canvas Builder) ---
+        async function downloadAsPNG() {
+            const name = (document.getElementById('stud-name').value || "STUDENT").toUpperCase();
+            
+            // Re-render elements onto a high resolution output canvas
+            const canvas = document.createElement('canvas');
+            // 300 DPI resolution multiplier
+            const W = 638, H = 1012;
+            canvas.width = W;
+            canvas.height = H;
+            const ctx = canvas.getContext('2d');
+
+            // Find house colors
+            const houseSelect = document.getElementById('stud-house');
+            const houseName = houseSelect.value;
+            const hColor = houseSelect.options[houseSelect.selectedIndex]?.dataset.color || "#10b981";
+
+            const logoImg = document.getElementById('card-logo-img');
+            const studentImg = document.getElementById('card-photo-img');
+            const sigImg = document.getElementById('card-signature-img');
+            const founderImg = document.getElementById('card-founder-img');
+
+            const roll = document.getElementById('stud-roll').value || "-";
+            const dept = document.getElementById('stud-dept').value.toUpperCase() || "-";
+            const blood = document.getElementById('stud-blood').value || "-";
+            const years = `${document.getElementById('stud-start').value || "2024"} - ${document.getElementById('stud-end').value || "2027"}`;
+            const address = document.getElementById('stud-address').value || "-";
+
+            const collegeName = (document.getElementById('brand-college-name').value || "COLLEGE NAME").toUpperCase();
+            const collegeAddr = document.getElementById('brand-college-addr').value || "";
+            const founderQuote = document.getElementById('brand-founder-quote').value || "";
+            const emergency = document.getElementById('brand-emergency').value || "";
+
+            const loadImg = el => new Promise(res => {
+                if (!el || !el.src || el.src.length < 5) return res(null);
+                const img = new Image();
+                if (el.src.startsWith('http')) img.crossOrigin = 'anonymous';
+                img.onload = () => res(img);
+                img.onerror = () => res(null);
+                img.src = el.src;
+            });
+
+            const [logo, photo, signature, founder] = await Promise.all([
+                loadImg(logoImg),
+                loadImg(studentImg),
+                loadImg(sigImg),
+                loadImg(founderImg)
+            ]);
+
+            // Draw either FRONT or BACK based on active tab view
+            if (isFrontActive) {
+                // Background Gradient
+                const bg = ctx.createLinearGradient(0, 0, 0, H);
+                bg.addColorStop(0, '#09091c'); bg.addColorStop(0.5, '#0d0c29'); bg.addColorStop(1, '#060514');
+                ctx.fillStyle = bg;
+                ctx.roundRect(0, 0, W, H, 40); ctx.fill();
+
+                // Dynamic Glow Accent Border
+                ctx.strokeStyle = hColor;
+                ctx.lineWidth = 8;
+                ctx.roundRect(4, 4, W-8, H-8, 38); ctx.stroke();
+
+                // Grid background dots
+                ctx.fillStyle = 'rgba(255,255,255,0.015)';
+                for (let x = 20; x < W; x += 30) {
+                    for (let y = 20; y < H; y += 30) {
+                        ctx.beginPath(); ctx.arc(x, y, 2, 0, Math.PI*2); ctx.fill();
+                    }
+                }
+
+                // Header Logo
+                if (logo) {
+                    ctx.save(); ctx.beginPath(); ctx.arc(75, 90, 45, 0, Math.PI*2); ctx.clip();
+                    ctx.drawImage(logo, 30, 45, 90, 90); ctx.restore();
+                    ctx.beginPath(); ctx.arc(75, 90, 45, 0, Math.PI*2);
+                    ctx.strokeStyle = 'rgba(255,255,255,0.1)'; ctx.lineWidth = 2; ctx.stroke();
+                }
+
+                // College Branding Text
+                ctx.fillStyle = '#ffffff'; ctx.textAlign = 'left';
+                ctx.font = '800 26px Outfit, Arial';
+                ctx.fillText(collegeName.substring(0, 32), 140, 85);
+                ctx.font = '600 13px Inter, Arial';
+                ctx.fillStyle = '#94a3b8';
+                ctx.fillText(collegeAddr.substring(0, 50), 140, 110);
+
+                // Divider line
+                ctx.strokeStyle = 'rgba(255,255,255,0.08)'; ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.moveTo(30, 160); ctx.lineTo(W-30, 160); ctx.stroke();
+
+                // Student Photo
+                if (photo) {
+                    ctx.save(); ctx.beginPath();
+                    ctx.roundRect(194, 190, 250, 320, 24); ctx.clip();
+                    ctx.drawImage(photo, 194, 190, 250, 320); ctx.restore();
+                    ctx.strokeStyle = hColor; ctx.lineWidth = 4;
+                    ctx.roundRect(194, 190, 250, 320, 24); ctx.stroke();
+                }
+
+                // Student Credentials
+                ctx.fillStyle = '#ffffff'; ctx.textAlign = 'center';
+                ctx.font = '800 38px Outfit, Arial';
+                ctx.fillText(name, W/2, 560);
+                
+                ctx.font = '700 20px Inter, Arial';
+                ctx.fillStyle = hColor;
+                ctx.fillText(dept, W/2, 595);
+
+                // Details Grid (Roll, House, Blood, Years)
+                const gridY = 640;
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.02)';
+                ctx.roundRect(40, gridY, W-80, 160, 16); ctx.fill();
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)'; ctx.lineWidth = 1;
+                ctx.roundRect(40, gridY, W-80, 160, 16); ctx.stroke();
+
+                // Grid Text
+                ctx.textAlign = 'left';
+                // Col 1: Roll No
+                ctx.fillStyle = '#94a3b8'; ctx.font = '700 13px Inter'; ctx.fillText("ROLL NO", 70, gridY + 45);
+                ctx.fillStyle = '#ffffff'; ctx.font = '700 18px Inter'; ctx.fillText(roll, 70, gridY + 70);
+                // Col 1: House
+                ctx.fillStyle = '#94a3b8'; ctx.font = '700 13px Inter'; ctx.fillText("HOUSE", 70, gridY + 110);
+                ctx.fillStyle = '#ffffff'; ctx.font = '700 18px Inter'; ctx.fillText(houseName.toUpperCase(), 70, gridY + 135);
+
+                // Col 2: Blood
+                ctx.fillStyle = '#94a3b8'; ctx.font = '700 13px Inter'; ctx.fillText("BLOOD GRP", W/2 + 30, gridY + 45);
+                ctx.fillStyle = '#ffffff'; ctx.font = '700 18px Inter'; ctx.fillText(blood, W/2 + 30, gridY + 70);
+                // Col 2: Years
+                ctx.fillStyle = '#94a3b8'; ctx.font = '700 13px Inter'; ctx.fillText("COURSE YEAR", W/2 + 30, gridY + 110);
+                ctx.fillStyle = '#ffffff'; ctx.font = '700 18px Inter'; ctx.fillText(years, W/2 + 30, gridY + 135);
+
+                // Footer divider
+                ctx.strokeStyle = 'rgba(255,255,255,0.08)'; ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.moveTo(30, 840); ctx.lineTo(W-30, 840); ctx.stroke();
+
+                // Principal signature
+                if (signature) {
+                    ctx.drawImage(signature, 50, 860, 170, 60);
+                }
+                ctx.fillStyle = '#94a3b8'; ctx.font = '700 12px Inter'; ctx.textAlign = 'left';
+                ctx.fillText("PRINCIPAL", 50, 940);
+
+                // QR Code
+                const qrCanvas = document.querySelector('#card-qr-box canvas');
+                if (qrCanvas) {
+                    ctx.fillStyle = '#ffffff';
+                    ctx.roundRect(W-200, 855, 140, 140, 10); ctx.fill();
+                    ctx.drawImage(qrCanvas, W-190, 865, 120, 120);
+                }
+
+            } else {
+                // Render BACK side
+                const bg = ctx.createLinearGradient(0, 0, 0, H);
+                bg.addColorStop(0, '#09091c'); bg.addColorStop(0.5, '#0d0c29'); bg.addColorStop(1, '#060514');
+                ctx.fillStyle = bg;
+                ctx.roundRect(0, 0, W, H, 40); ctx.fill();
+
+                ctx.strokeStyle = hColor;
+                ctx.lineWidth = 8;
+                ctx.roundRect(4, 4, W-8, H-8, 38); ctx.stroke();
+
+                // College name header
+                ctx.fillStyle = '#ffffff'; ctx.textAlign = 'center';
+                ctx.font = '800 24px Outfit, Arial';
+                ctx.fillText(collegeName, W/2, 80);
+
+                ctx.strokeStyle = 'rgba(255,255,255,0.08)'; ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.moveTo(30, 110); ctx.lineTo(W-30, 110); ctx.stroke();
+
+                // Founder photo
+                if (founder) {
+                    ctx.save(); ctx.beginPath(); ctx.arc(W/2, 230, 80, 0, Math.PI*2); ctx.clip();
+                    ctx.drawImage(founder, W/2 - 80, 150, 160, 160); ctx.restore();
+                    ctx.beginPath(); ctx.arc(W/2, 230, 80, 0, Math.PI*2);
+                    ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 4; ctx.stroke();
+                }
+
+                // Quote
+                ctx.fillStyle = '#94a3b8'; ctx.font = 'italic 600 17px Inter';
+                ctx.fillText(`"${founderQuote}"`, W/2, 370);
+
+                // Student address block
+                const addrY = 490;
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.02)';
+                ctx.roundRect(50, addrY, W-100, 180, 16); ctx.fill();
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+                ctx.roundRect(50, addrY, W-100, 180, 16); ctx.stroke();
+
+                ctx.fillStyle = hColor; ctx.font = '700 14px Inter'; ctx.textAlign = 'left';
+                ctx.fillText("STUDENT ADDRESS", 80, addrY + 40);
+                
+                ctx.fillStyle = '#ffffff'; ctx.font = '600 16px Inter';
+                wrapText(ctx, address, 80, addrY + 75, W - 160, 25);
+
+                // Emergency contact footer
+                ctx.strokeStyle = 'rgba(255,255,255,0.08)'; ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.moveTo(30, 880); ctx.lineTo(W-30, 880); ctx.stroke();
+
+                ctx.fillStyle = '#ef4444'; ctx.font = '700 16px Inter'; ctx.textAlign = 'center';
+                ctx.fillText(emergency.toUpperCase(), W/2, 930);
+            }
+
+            // Export to download
+            canvas.toBlob(blob => {
+                const a = document.createElement('a');
+                a.download = `ID_${name.replace(/ /g,'_')}_${isFrontActive ? 'FRONT' : 'BACK'}.png`;
+                a.href = URL.createObjectURL(blob);
+                a.click();
+            }, 'image/png');
+        }
+
+        // Helper function for wrapping canvas text
+        function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
+            const words = text.split(' ');
+            let line = '';
+            for(let n = 0; n < words.length; n++) {
+                let testLine = line + words[n] + ' ';
+                let metrics = ctx.measureText(testLine);
+                let testWidth = metrics.width;
+                if (testWidth > maxWidth && n > 0) {
+                    ctx.fillText(line, x, y);
+                    line = words[n] + ' ';
+                    y += lineHeight;
+                }
+                else {
+                    line = testLine;
+                }
+            }
+            ctx.fillText(line, x, y);
+        }
+
+        function getDefaultAvatar() {
+            return "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 88 110'%3E%3Crect width='88' height='110' fill='%23ffffff08'/%3E%3Ccircle cx='44' cy='38' r='22' fill='%23ffffff15'/%3E%3Cellipse cx='44' cy='90' rx='32' ry='22' fill='%23ffffff15'/%3E%3C/svg%3E";
+        }
+    </script>
+</body>
+</html>
