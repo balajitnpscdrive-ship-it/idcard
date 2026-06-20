@@ -856,56 +856,6 @@
             text-transform: uppercase;
         }
 
-        /* ── SIMPLIFIED CAPTURE UI ── */
-        .advanced-drawer {
-            border-top: 1px solid var(--border-glass);
-            padding-top: 15px;
-            margin-top: 15px;
-        }
-
-        .advanced-drawer summary {
-            font-size: 11px;
-            font-weight: 800;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-            cursor: pointer;
-            user-select: none;
-            letter-spacing: 0.5px;
-            outline: none;
-            transition: 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .advanced-drawer summary:hover {
-            color: var(--text-primary);
-        }
-
-        .advanced-content {
-            margin-top: 15px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .embedded-camera-box {
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 16px;
-            padding: 12px;
-            border: 1px solid var(--border-glass);
-        }
-
-        #save-status-indicator.saving {
-            color: #fbbf24;
-        }
-        #save-status-indicator.success {
-            color: #34d399;
-        }
-        #save-status-indicator.error {
-            color: #f87171;
-        }
-
         /* ── CAMERA MODAL ── */
         .modal {
             display: none;
@@ -1174,202 +1124,178 @@
     <div class="app-container">
         <!-- ── LEFT CONTROL PANEL ── -->
         <div class="control-panel glass-panel">
-            <!-- Main Capture Interface -->
-            <div class="capture-station-header" style="margin-bottom: 15px;">
-                <h2 class="panel-title" style="margin-bottom: 0;">Photo Capture Station</h2>
-            </div>
-            
-            <div class="form-group" style="margin-bottom: 15px;">
-                <label style="font-size: 11px; font-weight: 800; color: #fff;">Select Student Name</label>
-                <select id="student-selector" onchange="selectStudent(this.value)" style="width: 100%; font-size: 14px; padding: 12px; border-radius: 12px; background: rgba(0,0,0,0.5); border: 1px solid var(--accent-primary); color: white; outline: none;">
-                    <option value="">-- Add New Student --</option>
-                </select>
-                <div style="margin-top: 6px;">
-                    <a href="#" onclick="seedDemoStudents(event)" style="font-size: 10.5px; color: var(--accent-primary); font-weight: 700; text-decoration: none;">💡 Seed Demo Students into Google Sheet</a>
-                </div>
+            <div class="tab-menu">
+                <button class="tab-btn active" onclick="switchTab('students')">Students</button>
+                <button class="tab-btn" onclick="switchTab('branding')">Branding</button>
+                <button class="tab-btn" onclick="switchTab('bulk')">Bulk Import</button>
             </div>
 
-            <div class="embedded-camera-box" style="margin-bottom: 15px;">
-                <div class="video-container" style="width: 100%; height: 280px; border-radius: 12px; overflow: hidden; background: #000; border: 2px solid var(--border-glass); position: relative; display: flex; align-items: center; justify-content: center;">
-                    <video id="panel-webcam-video" autoplay playsinline style="width: 100%; height: 100%; object-fit: cover;"></video>
-                    <div class="crop-overlay" style="position: absolute; inset: 0; pointer-events: none; background: radial-gradient(circle 90px at center, transparent 99%, rgba(0, 0, 0, 0.5) 100%);"></div>
-                    <span id="camera-loading-label" style="position: absolute; font-size: 12px; color: var(--text-secondary);">Initializing camera...</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
-                    <span id="webcam-status-label" style="font-size: 11px; font-weight: 700; color: var(--text-secondary);">📷 Connecting...</span>
-                    <button type="button" class="btn btn-sec" style="padding: 4px 8px; font-size: 10px;" onclick="restartWebcam()">🔄 Restart Cam</button>
-                </div>
-            </div>
-
-            <div class="capture-actions" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px;">
-                <button type="button" class="btn" id="capture-save-btn" style="padding: 14px; font-size: 14px; background: var(--accent-glow); box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4); width: 100%;" onclick="captureAndSavePhoto()" disabled>
-                    📸 Capture & Save Photo
-                </button>
+            <!-- Tab: Students -->
+            <div id="tab-students" class="tab-content active">
+                <h2 class="panel-title">Manage Student Records</h2>
                 
-                <div style="display: flex; gap: 8px; align-items: center; justify-content: center;">
-                    <span style="font-size: 11px; color: var(--text-secondary);">Or upload:</span>
-                    <button type="button" class="btn btn-sec" style="padding: 6px 12px; font-size: 11px;" onclick="document.getElementById('photo-file-input').click()">📁 Choose File</button>
-                    <input type="file" id="photo-file-input" accept="image/*" style="display:none;" onchange="loadPhotoFromFile(this)">
+                <div class="form-group">
+                    <label>Select Active Student</label>
+                    <select id="student-selector" onchange="selectStudent(this.value)">
+                        <option value="">-- Add New Student --</option>
+                    </select>
+                    <a href="#" onclick="seedDemoStudents(event)" style="font-size: 10.5px; color: var(--accent-primary); font-weight: 700; text-decoration: none; margin-top: 6px; display: inline-block;">💡 Seed Demo Students into Google Sheet</a>
                 </div>
-                
-                <div id="save-status-indicator" style="text-align: center; font-size: 12.5px; font-weight: 700; min-height: 20px; margin-top: 5px;"></div>
-            </div>
 
-            <!-- Collapsible drawer for Advanced Settings & Printing -->
-            <details class="advanced-drawer">
-                <summary>
-                    ⚙️ Advanced Settings & Printing
-                </summary>
-                <div class="advanced-content">
-                    <div class="tab-menu">
-                        <button class="tab-btn active" onclick="switchTab('students')">Students Form</button>
-                        <button class="tab-btn" onclick="switchTab('branding')">Branding</button>
-                        <button class="tab-btn" onclick="switchTab('bulk')">Bulk Import</button>
+                <hr style="border: 0; border-top: 1px solid var(--border-glass); margin: 15px 0;">
+
+                <form id="student-form" onsubmit="saveStudentForm(event)">
+                    <input type="hidden" id="stud-id">
+                    
+                    <div class="form-group">
+                        <label>Full Name</label>
+                        <input type="text" id="stud-name" placeholder="e.g. Senthil Kumar D" required oninput="syncPreview()">
                     </div>
 
-                    <!-- Tab: Students Form -->
-                    <div id="tab-students" class="tab-content active">
-                        <h2 class="panel-title">Edit Active Record</h2>
-                        <form id="student-form" onsubmit="saveStudentForm(event)">
-                            <input type="hidden" id="stud-id">
+                    <div class="row-grid">
+                        <div class="form-group">
+                            <label>Roll Number</label>
+                            <input type="text" id="stud-roll" placeholder="e.g. 24ME08" required oninput="syncPreview()">
+                        </div>
+                        <div class="form-group">
+                            <label>Department</label>
+                            <input type="text" id="stud-dept" placeholder="e.g. Mechanical" required oninput="syncPreview()">
+                        </div>
+                    </div>
+
+                    <div class="row-grid">
+                        <div class="form-group">
+                            <label>House Name</label>
+                            <select id="stud-house" required onchange="syncPreview()">
+                                <!-- Populated dynamically from Sheet -->
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Blood Group</label>
+                            <select id="stud-blood" required onchange="syncPreview()">
+                                <option value="O +ve">O +ve</option>
+                                <option value="O -ve">O -ve</option>
+                                <option value="A +ve">A +ve</option>
+                                <option value="A -ve">A -ve</option>
+                                <option value="B +ve">B +ve</option>
+                                <option value="B -ve">B -ve</option>
+                                <option value="AB +ve">AB +ve</option>
+                                <option value="AB -ve">AB -ve</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row-grid">
+                        <div class="form-group">
+                            <label>Start Year</label>
+                            <input type="number" id="stud-start" placeholder="2024" required oninput="syncPreview()">
+                        </div>
+                        <div class="form-group">
+                            <label>End Year</label>
+                            <input type="number" id="stud-end" placeholder="2027" required oninput="syncPreview()">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Phone Number</label>
+                        <input type="text" id="stud-phone" placeholder="e.g. +91 94890 85942" required oninput="syncPreview()">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Home Address</label>
+                        <textarea id="stud-address" rows="2" placeholder="Enter student's home address..." required oninput="syncPreview()"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Student Photo</label>
+                        <div class="photo-capture-box" id="drop-zone" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropFile(event)">
+                            <img id="photo-preview-thumbnail" class="photo-preview-thumb" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 88 110'%3E%3Crect width='88' height='110' fill='%23ffffff08'/%3E%3Ccircle cx='44' cy='38' r='22' fill='%23ffffff15'/%3E%3Cellipse cx='44' cy='90' rx='32' ry='22' fill='%23ffffff15'/%3E%3C/svg%3E">
+                            <p style="font-size: 11px; color: var(--text-secondary); margin-bottom: 8px;">Drag & drop photo, or choose action below</p>
                             
-                            <div class="form-group">
-                                <label>Full Name</label>
-                                <input type="text" id="stud-name" placeholder="e.g. Senthil Kumar D" required oninput="syncPreview()">
+                            <div class="photo-actions">
+                                <button type="button" class="btn btn-sec" style="padding: 6px 10px; font-size: 11px;" onclick="document.getElementById('photo-file-input').click()">📁 File</button>
+                                <button type="button" class="btn" style="padding: 6px 10px; font-size: 11px;" onclick="openCameraModal()">📷 Camera</button>
                             </div>
-
-                            <div class="row-grid">
-                                <div class="form-group">
-                                    <label>Roll Number</label>
-                                    <input type="text" id="stud-roll" placeholder="e.g. 24ME08" required oninput="syncPreview()">
-                                </div>
-                                <div class="form-group">
-                                    <label>Department</label>
-                                    <input type="text" id="stud-dept" placeholder="e.g. Mechanical" required oninput="syncPreview()">
-                                </div>
-                            </div>
-
-                            <div class="row-grid">
-                                <div class="form-group">
-                                    <label>House Name</label>
-                                    <select id="stud-house" required onchange="syncPreview()">
-                                        <!-- Populated dynamically from Sheet -->
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label>Blood Group</label>
-                                    <select id="stud-blood" required onchange="syncPreview()">
-                                        <option value="O +ve">O +ve</option>
-                                        <option value="O -ve">O -ve</option>
-                                        <option value="A +ve">A +ve</option>
-                                        <option value="A -ve">A -ve</option>
-                                        <option value="B +ve">B +ve</option>
-                                        <option value="B -ve">B -ve</option>
-                                        <option value="AB +ve">AB +ve</option>
-                                        <option value="AB -ve">AB -ve</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="row-grid">
-                                <div class="form-group">
-                                    <label>Start Year</label>
-                                    <input type="number" id="stud-start" placeholder="2024" required oninput="syncPreview()">
-                                </div>
-                                <div class="form-group">
-                                    <label>End Year</label>
-                                    <input type="number" id="stud-end" placeholder="2027" required oninput="syncPreview()">
-                                </div>
-                            </div>
-
-                            <div class="form-group">
-                                <label>Phone Number</label>
-                                <input type="text" id="stud-phone" placeholder="e.g. +91 94890 85942" required oninput="syncPreview()">
-                            </div>
-
-                            <div class="form-group">
-                                <label>Home Address</label>
-                                <textarea id="stud-address" rows="2" placeholder="Enter student's home address..." required oninput="syncPreview()"></textarea>
-                            </div>
-
-                            <div class="row-grid" style="margin-top: 10px;">
-                                <button type="submit" class="btn" id="save-student-btn">⚡ Save Record</button>
-                                <button type="button" class="btn btn-danger" id="delete-student-btn" onclick="deleteActiveStudent()" disabled>🗑️ Delete</button>
-                            </div>
-                        </form>
+                            <input type="file" id="photo-file-input" accept="image/*" style="display:none;" onchange="loadPhotoFromFile(this)">
+                        </div>
                     </div>
 
-                    <!-- Tab: Branding Settings -->
-                    <div id="tab-branding" class="tab-content">
-                        <h2 class="panel-title">Branding & Layout Settings</h2>
-                        
-                        <form id="branding-form" onsubmit="saveBrandingSettings(event)">
-                            <div class="form-group">
-                                <label>College Name</label>
-                                <input type="text" id="brand-college-name" required oninput="syncPreview()">
-                            </div>
+                    <div class="row-grid" style="margin-top: 10px;">
+                        <button type="submit" class="btn" id="save-student-btn">⚡ Save Record</button>
+                        <button type="button" class="btn btn-danger" id="delete-student-btn" onclick="deleteActiveStudent()" disabled>🗑️ Delete</button>
+                    </div>
+                </form>
+            </div>
 
-                            <div class="form-group">
-                                <label>College Address</label>
-                                <textarea id="brand-college-addr" rows="2" required oninput="syncPreview()"></textarea>
-                            </div>
-
-                            <div class="form-group">
-                                <label>Founder's Inspirational Quote</label>
-                                <textarea id="brand-founder-quote" rows="2" required oninput="syncPreview()"></textarea>
-                            </div>
-
-                            <div class="form-group">
-                                <label>Emergency Contact No.</label>
-                                <input type="text" id="brand-emergency" required oninput="syncPreview()">
-                            </div>
-
-                            <hr style="border: 0; border-top: 1px solid var(--border-glass); margin: 20px 0;">
-
-                            <!-- Media Uploads -->
-                            <div class="form-group">
-                                <label>College Logo (PNG/JPEG)</label>
-                                <input type="file" accept="image/*" onchange="uploadBrandingAsset(this, 'LogoId')">
-                            </div>
-
-                            <div class="form-group">
-                                <label>Founder Picture (PNG/JPEG)</label>
-                                <input type="file" accept="image/*" onchange="uploadBrandingAsset(this, 'FounderPicId')">
-                            </div>
-
-                            <div class="form-group">
-                                <label>Principal Signature (PNG/JPEG)</label>
-                                <input type="file" accept="image/*" onchange="uploadBrandingAsset(this, 'PrincipalSignatureId')">
-                            </div>
-
-                            <button type="submit" class="btn btn-full" id="save-branding-btn" style="width: 100%; margin-top: 10px;">💾 Save Branding Settings</button>
-                        </form>
+            <!-- Tab: Branding Settings -->
+            <div id="tab-branding" class="tab-content">
+                <h2 class="panel-title">Branding & Layout Settings</h2>
+                
+                <form id="branding-form" onsubmit="saveBrandingSettings(event)">
+                    <div class="form-group">
+                        <label>College Name</label>
+                        <input type="text" id="brand-college-name" required oninput="syncPreview()">
                     </div>
 
-                    <!-- Tab: Bulk Operations -->
-                    <div id="tab-bulk" class="tab-content">
-                        <h2 class="panel-title">Bulk Operations</h2>
-                        <div class="form-group">
-                            <label>CSV File (Columns: Name, Department, House, RollNo, BloodGroup, StartYear, EndYear, Address, Phone)</label>
-                            <input type="file" id="csv-file-input" accept=".csv">
-                        </div>
-                        <button class="btn btn-full" style="width: 100%; margin-bottom: 20px;" onclick="processBulkCSV()">📂 Process CSV File</button>
+                    <div class="form-group">
+                        <label>College Address</label>
+                        <textarea id="brand-college-addr" rows="2" required oninput="syncPreview()"></textarea>
+                    </div>
 
-                        <div class="form-group">
-                            <label>Bulk Print Queue Selection</label>
-                            <div class="list-container" id="bulk-queue-list">
-                                <!-- Queue check items -->
-                            </div>
-                        </div>
-                        
-                        <div class="row-grid">
-                            <button class="btn btn-sec" onclick="printQueue('front')">🖨️ Fronts</button>
-                            <button class="btn btn-sec" onclick="printQueue('back')">🖨️ Backs</button>
-                        </div>
-                        <button class="btn btn-full" style="width: 100%; margin-top: 10px;" onclick="printQueue('duplex')">🖨️ Print Selected Duplex</button>
+                    <div class="form-group">
+                        <label>Founder's Inspirational Quote</label>
+                        <textarea id="brand-founder-quote" rows="2" required oninput="syncPreview()"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Emergency Contact No.</label>
+                        <input type="text" id="brand-emergency" required oninput="syncPreview()">
+                    </div>
+
+                    <hr style="border: 0; border-top: 1px solid var(--border-glass); margin: 20px 0;">
+
+                    <!-- Media Uploads -->
+                    <div class="form-group">
+                        <label>College Logo (PNG/JPEG)</label>
+                        <input type="file" accept="image/*" onchange="uploadBrandingAsset(this, 'LogoId')">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Founder Picture (PNG/JPEG)</label>
+                        <input type="file" accept="image/*" onchange="uploadBrandingAsset(this, 'FounderPicId')">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Principal Signature (PNG/JPEG)</label>
+                        <input type="file" accept="image/*" onchange="uploadBrandingAsset(this, 'PrincipalSignatureId')">
+                    </div>
+
+                    <button type="submit" class="btn btn-full" id="save-branding-btn" style="width: 100%; margin-top: 10px;">💾 Save Branding Settings</button>
+                </form>
+            </div>
+
+            <!-- Tab: Bulk Operations -->
+            <div id="tab-bulk" class="tab-content">
+                <h2 class="panel-title">Bulk Operations</h2>
+                <div class="form-group">
+                    <label>CSV File (Columns: Name, Department, House, RollNo, BloodGroup, StartYear, EndYear, Address, Phone)</label>
+                    <input type="file" id="csv-file-input" accept=".csv">
+                </div>
+                <button class="btn btn-full" style="width: 100%; margin-bottom: 20px;" onclick="processBulkCSV()">📂 Process CSV File</button>
+
+                <div class="form-group">
+                    <label>Bulk Print Queue Selection</label>
+                    <div class="list-container" id="bulk-queue-list">
+                        <!-- Queue check items -->
                     </div>
                 </div>
-            </details>
+                
+                <div class="row-grid">
+                    <button class="btn btn-sec" onclick="printQueue('front')">🖨️ Fronts</button>
+                    <button class="btn btn-sec" onclick="printQueue('back')">🖨️ Backs</button>
+                </div>
+                <button class="btn btn-full" style="width: 100%; margin-top: 10px;" onclick="printQueue('duplex')">🖨️ Print Selected Duplex</button>
+            </div>
         </div>
 
         <!-- ── RIGHT PREVIEW PANEL ── -->
@@ -1513,7 +1439,21 @@
         </div>
     </div>
 
-
+    <!-- ── WEBCAM MODAL ── -->
+    <div class="modal" id="camera-modal">
+        <div class="modal-content">
+            <h3 style="font-family: 'Outfit'; font-size: 15px;">Capture Student Photo</h3>
+            <div class="video-container">
+                <video id="webcam-video" autoplay playsinline></video>
+                <div class="crop-overlay"></div>
+            </div>
+            
+            <div style="display: flex; gap: 10px; width: 100%;">
+                <button class="btn btn-sec" style="flex: 1;" onclick="closeCameraModal()">Cancel</button>
+                <button class="btn" style="flex: 1;" onclick="capturePhoto()">Capture</button>
+            </div>
+        </div>
+    </div>
 
     <!-- ── PRINT STYLES GRID CONTAINER (Populated dynamically during printing) ── -->
     <div id="print-grid-container"></div>
@@ -1545,44 +1485,7 @@
                 loadMockData();
             }
             syncPreview();
-            startEmbeddedWebcam();
         };
-
-        async function startEmbeddedWebcam() {
-            const video = document.getElementById('panel-webcam-video');
-            const loading = document.getElementById('camera-loading-label');
-            const status = document.getElementById('webcam-status-label');
-            if (webcamStream) return;
-            try {
-                webcamStream = await navigator.mediaDevices.getUserMedia({
-                    video: { width: 480, height: 600, facingMode: 'user' }
-                });
-                video.srcObject = webcamStream;
-                if (loading) loading.style.display = 'none';
-                if (status) status.innerText = "📷 Camera Live";
-            } catch (err) {
-                console.error("Could not access webcam:", err);
-                if (loading) loading.innerText = "Camera not accessible";
-                if (status) status.innerText = "❌ Camera Error";
-            }
-        }
-
-        function restartWebcam() {
-            if (webcamStream) {
-                webcamStream.getTracks().forEach(track => track.stop());
-                webcamStream = null;
-            }
-            const video = document.getElementById('panel-webcam-video');
-            video.srcObject = null;
-            const loading = document.getElementById('camera-loading-label');
-            if (loading) {
-                loading.innerText = "Restarting camera...";
-                loading.style.display = 'block';
-            }
-            const status = document.getElementById('webcam-status-label');
-            if (status) status.innerText = "📷 Connecting...";
-            setTimeout(startEmbeddedWebcam, 500);
-        }
 
         function saveApiUrl() {
             const val = document.getElementById('api-url-input').value.trim();
@@ -1778,18 +1681,55 @@
                 selectedStudentPhotoBase64 = e.target.result;
                 document.getElementById('photo-preview-thumbnail').src = selectedStudentPhotoBase64;
                 document.getElementById('card-photo-img').src = selectedStudentPhotoBase64;
-                
-                // Automatically save student record if selected
-                if (activeStudentId) {
-                    saveStudentForm();
-                } else {
-                    alert("Please select a student name first before uploading a photo!");
-                }
             };
             reader.readAsDataURL(file);
         }
 
+        // Camera capture utilities
+        async function openCameraModal() {
+            const modal = document.getElementById('camera-modal');
+            const video = document.getElementById('webcam-video');
+            
+            try {
+                webcamStream = await navigator.mediaDevices.getUserMedia({
+                    video: { width: 480, height: 600, facingMode: 'user' }
+                });
+                video.srcObject = webcamStream;
+                modal.style.display = 'flex';
+            } catch (err) {
+                alert("Could not access your camera: " + err.message);
+            }
+        }
 
+        function closeCameraModal() {
+            const modal = document.getElementById('camera-modal');
+            if (webcamStream) {
+                webcamStream.getTracks().forEach(track => track.stop());
+            }
+            modal.style.display = 'none';
+        }
+
+        function capturePhoto() {
+            const video = document.getElementById('webcam-video');
+            const canvas = document.createElement('canvas');
+            
+            canvas.width = 300;
+            canvas.height = 375; // 4:5 ratio
+            
+            const ctx = canvas.getContext('2d');
+            const cropWidth = video.videoWidth;
+            const cropHeight = (video.videoWidth * 1.25);
+            const cropX = 0;
+            const cropY = (video.videoHeight - cropHeight) / 2;
+            
+            ctx.drawImage(video, cropX, cropY, cropWidth, cropHeight, 0, 0, canvas.width, canvas.height);
+            
+            selectedStudentPhotoBase64 = canvas.toDataURL('image/jpeg', 0.9);
+            document.getElementById('photo-preview-thumbnail').src = selectedStudentPhotoBase64;
+            document.getElementById('card-photo-img').src = selectedStudentPhotoBase64;
+            
+            closeCameraModal();
+        }
 
         // --- PREVIEW SYNCING & QR GENERATION ---
         function syncPreview() {
@@ -1855,15 +1795,6 @@
         function selectStudent(studentId) {
             activeStudentId = studentId;
             const delBtn = document.getElementById('delete-student-btn');
-            const captureBtn = document.getElementById('capture-save-btn');
-            const statusLabel = document.getElementById('save-status-indicator');
-            
-            if (captureBtn) {
-                captureBtn.disabled = !studentId;
-            }
-            if (statusLabel) {
-                statusLabel.innerText = "";
-            }
             
             if (!studentId) {
                 document.getElementById('student-form').reset();
@@ -1871,12 +1802,12 @@
                 document.getElementById('photo-preview-thumbnail').src = getDefaultAvatar();
                 document.getElementById('card-photo-img').src = getDefaultAvatar();
                 selectedStudentPhotoBase64 = null;
-                if (delBtn) delBtn.disabled = true;
+                delBtn.disabled = true;
                 syncPreview();
                 return;
             }
 
-            if (delBtn) delBtn.disabled = false;
+            delBtn.disabled = false;
             const student = appData.students.find(s => s.StudentID === studentId);
             if (student) {
                 document.getElementById('stud-id').value = student.StudentID;
@@ -1906,24 +1837,10 @@
 
         // --- SUBMIT SAVE STUDENT ---
         async function saveStudentForm(e) {
-            if (e) e.preventDefault();
-            
+            e.preventDefault();
             const saveBtn = document.getElementById('save-student-btn');
-            const captureBtn = document.getElementById('capture-save-btn');
-            const statusLabel = document.getElementById('save-status-indicator');
-            
-            if (saveBtn) {
-                saveBtn.disabled = true;
-                saveBtn.innerText = "Saving...";
-            }
-            if (captureBtn) {
-                captureBtn.disabled = true;
-                captureBtn.innerText = "⚡ Saving...";
-            }
-            if (statusLabel) {
-                statusLabel.className = "saving";
-                statusLabel.innerText = "⏳ Saving photo and record...";
-            }
+            saveBtn.disabled = true;
+            saveBtn.innerText = "Saving...";
 
             const currentExistingPhotoId = activeStudentId ? (appData.students.find(s => s.StudentID === activeStudentId)?.PhotoId || "") : "";
 
@@ -1944,10 +1861,9 @@
             try {
                 // 1. Upload student photo to Drive if newly captured/selected
                 if (selectedStudentPhotoBase64) {
-                    const safeFileName = studentData.Name.toUpperCase().replace(/[^A-Z0-9]/g, "_") + ".jpg";
                     const uploadRes = await apiPost("uploadAsset", {
                         type: "student_photo",
-                        fileName: safeFileName,
+                        fileName: `PHOTO_${studentData.RollNo}.jpg`,
                         base64Data: selectedStudentPhotoBase64
                     });
                     if (uploadRes.status === "success") {
@@ -1958,62 +1874,20 @@
                 // 2. Save Student row details to sheet
                 const res = await apiPost("saveStudent", studentData);
                 if (res.status === "success") {
+                    alert("Student record saved successfully!");
                     selectedStudentPhotoBase64 = null; // Clear base64 since it is now safely stored
-                    
-                    if (statusLabel) {
-                        statusLabel.className = "success";
-                        statusLabel.innerText = "✅ Saved Successfully!";
-                    }
-                    
                     await fetchInitialData(); // Re-sync app datasets
                     selectStudent(res.studentId);
                 } else {
                     alert("Failed to save student details: " + res.error);
-                    if (statusLabel) {
-                        statusLabel.className = "error";
-                        statusLabel.innerText = "❌ Save Error: " + res.error;
-                    }
                 }
             } catch (err) {
                 console.error(err);
                 alert("Backend API Call failed! Detailed logs: " + err.message);
-                if (statusLabel) {
-                    statusLabel.className = "error";
-                    statusLabel.innerText = "❌ Connection Failed";
-                }
             } finally {
-                if (saveBtn) {
-                    saveBtn.disabled = false;
-                    saveBtn.innerText = "⚡ Save Record";
-                }
-                if (captureBtn) {
-                    captureBtn.disabled = false;
-                    captureBtn.innerText = "📸 Capture & Save Photo";
-                }
+                saveBtn.disabled = false;
+                saveBtn.innerText = "⚡ Save Record";
             }
-        }
-
-        // Takes a webcam snapshot and triggers save immediately
-        function captureAndSavePhoto() {
-            const video = document.getElementById('panel-webcam-video');
-            const canvas = document.createElement('canvas');
-            
-            canvas.width = 300;
-            canvas.height = 375; // 4:5 ratio
-            
-            const ctx = canvas.getContext('2d');
-            const cropWidth = video.videoWidth;
-            const cropHeight = (video.videoWidth * 1.25);
-            const cropX = (video.videoWidth - cropWidth) / 2;
-            const cropY = (video.videoHeight - cropHeight) / 2;
-            
-            ctx.drawImage(video, cropX, cropY, cropWidth, cropHeight, 0, 0, canvas.width, canvas.height);
-            
-            selectedStudentPhotoBase64 = canvas.toDataURL('image/jpeg', 0.9);
-            document.getElementById('photo-preview-thumbnail').src = selectedStudentPhotoBase64;
-            document.getElementById('card-photo-img').src = selectedStudentPhotoBase64;
-            
-            saveStudentForm();
         }
 
         // --- DELETE STUDENT ---
