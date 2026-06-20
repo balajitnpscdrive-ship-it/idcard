@@ -221,8 +221,23 @@
     }
     #camVideo {
       width: 100%; height: 100%; object-fit: cover;
-      transform: scaleX(-1); display: block;
+      display: block;
     }
+    #camVideo.mirrored {
+      transform: scaleX(-1);
+    }
+    .cam-switch-btn {
+      position: absolute; top: 12px; right: 12px;
+      width: 38px; height: 38px; border-radius: 50%;
+      background: rgba(0,0,0,0.6); backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      border: 1px solid rgba(255,255,255,0.15);
+      color: #fff; display: flex; align-items: center; justify-content: center;
+      cursor: pointer; z-index: 10; font-size: 16px;
+      transition: background-color 0.2s, transform 0.2s;
+    }
+    .cam-switch-btn:hover { background: var(--accent); }
+    .cam-switch-btn:active { transform: scale(0.9); }
     .cam-overlay-ui {
       position: absolute; inset: 0;
       display: flex; align-items: flex-end; justify-content: center;
@@ -584,6 +599,7 @@
         <!-- CAMERA TAB -->
         <div id="camPanel">
           <div class="cam-box" id="camBox">
+            <button class="cam-switch-btn" id="btnSwitchCam" onclick="toggleCameraFacing()" title="Switch Camera">🔄</button>
             <video id="camVideo" playsinline autoplay muted></video>
             <div class="cam-overlay-ui">
               <span class="cam-hint" id="camHint">Click Capture to take photo</span>
@@ -673,6 +689,7 @@
     let capturedBlob = null;
     let uploadedBlob = null;
     let currentRow   = null; 
+    let currentFacingMode = 'user'; // 'user' (front) or 'environment' (back)
 
     // Check Config
     if (GAS_API_URL === 'YOUR_GAS_WEB_APP_URL_HERE' || !GAS_API_URL) {
@@ -800,9 +817,15 @@
       if (cameraStream) return;
       try {
         cameraStream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 960 } }
+          video: { facingMode: currentFacingMode, width: { ideal: 1280 }, height: { ideal: 960 } }
         });
-        document.getElementById('camVideo').srcObject = cameraStream;
+        const video = document.getElementById('camVideo');
+        video.srcObject = cameraStream;
+        if (currentFacingMode === 'user') {
+          video.classList.add('mirrored');
+        } else {
+          video.classList.remove('mirrored');
+        }
       } catch(e) {
         document.getElementById('camHint').textContent = '⚠️ Camera unavailable — use Upload';
       }
@@ -815,6 +838,13 @@
       document.getElementById('camVideo').srcObject = null;
     }
 
+    async function toggleCameraFacing() {
+      stopCamera();
+      currentFacingMode = (currentFacingMode === 'user') ? 'environment' : 'user';
+      await startCamera();
+      showToast('🔄 Switched to ' + (currentFacingMode === 'user' ? 'Front' : 'Back') + ' camera');
+    }
+
     function capture() {
       const video  = document.getElementById('camVideo');
       const canvas = document.createElement('canvas');
@@ -823,8 +853,11 @@
 
       const ctx = canvas.getContext('2d');
       ctx.save();
-      ctx.translate(canvas.width, 0);
-      ctx.scale(-1, 1);
+      // Mirror canvas drawing only if front-facing camera is active
+      if (currentFacingMode === 'user') {
+        ctx.translate(canvas.width, 0);
+        ctx.scale(-1, 1);
+      }
       ctx.drawImage(video, 0, 0);
       ctx.restore();
 
