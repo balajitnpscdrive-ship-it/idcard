@@ -751,10 +751,11 @@
 
       setStepDone(1, true);
 
-      const filtered = allStudents.filter(s => s.department === dept);
+      // Only show students who don't have a photo yet (s.fileId is falsy)
+      const filtered = allStudents.filter(s => s.department === dept && !s.fileId);
       stuSel.innerHTML = `<option value="">— Select Student Name —</option>` +
         filtered.map(s =>
-          `<option value="${s.rowIndex}">${esc(s.name)}${s.fileId ? ' ✓' : ''}</option>`
+          `<option value="${s.rowIndex}">${esc(s.name)}</option>`
         ).join('');
       stuSel.disabled = false;
       setStepDone(2, false);
@@ -969,17 +970,22 @@
       const s = allStudents.find(x => x.rowIndex === currentRow.rowIndex);
       if (s) { s.fileId = res.fileId; s.photoLink = res.viewUrl; }
 
+      // Remove from dropdown list since photo is now taken
       const opt = document.querySelector(`#studentSelect option[value="${currentRow.rowIndex}"]`);
-      if (opt && !opt.text.includes('✓')) opt.text += ' ✓';
+      if (opt) opt.remove();
 
       showToast('✅ Photo saved for ' + currentRow.name, 'success');
       renderStats();
       renderGrid();
 
+      // Reset state for next capture
+      currentRow   = null;
       capturedBlob = null;
       uploadedBlob = null;
+      hideStudentChip();
       retake();
       clearUpload();
+      setStepDone(2, false);
       setStepDone(3, false);
       updateSaveBtn();
     }
@@ -1083,6 +1089,22 @@
       onDeptChange(); 
 
       const stuSel = document.getElementById('studentSelect');
+      
+      // If the option doesn't exist (because they have a photo and were filtered out), add them temporarily
+      let exists = false;
+      for (let i = 0; i < stuSel.options.length; i++) {
+        if (stuSel.options[i].value == rowIndex) {
+          exists = true;
+          break;
+        }
+      }
+      if (!exists) {
+        const opt = document.createElement('option');
+        opt.value = s.rowIndex;
+        opt.text = esc(s.name) + ' (Edit Photo)';
+        stuSel.add(opt);
+      }
+
       stuSel.value = rowIndex;
       onStudentChange();
 
