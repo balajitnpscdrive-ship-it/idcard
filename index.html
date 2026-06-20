@@ -199,7 +199,7 @@
       display: flex; flex-direction: column; gap: 12px;
     }
 
-    /* Tab bar */
+    /* Tab row */
     .tab-row { display: flex; gap: 6px; }
     .tab {
       flex: 1; padding: 9px 0;
@@ -455,6 +455,18 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
+    /* ── Configuration Overlay ───────────────────────── */
+    .config-banner {
+      background: #be185d;
+      color: white;
+      text-align: center;
+      padding: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      position: relative;
+      z-index: 1000;
+    }
+
     /* ── Toast ───────────────────────────────────────── */
     .toast {
       position: fixed; bottom: 28px; left: 50%;
@@ -479,6 +491,11 @@
 
   <div class="orb orb-1"></div>
   <div class="orb orb-2"></div>
+
+  <!-- Config Banner if API URL is not set -->
+  <div class="config-banner" id="configBanner" style="display:none">
+    ⚠️ Web App API URL is not configured. Edit index.html line 431 to set your Google Apps Script URL.
+  </div>
 
   <!-- ── Header ─────────────────────────────────────── -->
   <header class="header">
@@ -630,7 +647,7 @@
         <div class="state">
           <div class="spinner"></div>
           <div class="state-title">Loading students…</div>
-          <div class="state-sub">Fetching from Google Sheets</div>
+          <div class="state-sub">Connecting to API</div>
         </div>
       </div>
 
@@ -642,6 +659,12 @@
   <div class="toast" id="toast"></div>
 
   <script>
+    // =========================================================================
+    //  ⚙️ CONFIGURATION
+    //  Replace this URL with the Google Apps Script Web App URL from Step 7
+    // =========================================================================
+    const GAS_API_URL = 'YOUR_GAS_WEB_APP_URL_HERE'; 
+
     // ── State ───────────────────────────────────────
     let allStudents  = [];
     let activeFilter = 'all';
@@ -649,15 +672,40 @@
     let cameraStream = null;
     let capturedBlob = null;
     let uploadedBlob = null;
-    let currentRow   = null; // selected student rowIndex
+    let currentRow   = null; 
+
+    // Check Config
+    if (GAS_API_URL === 'YOUR_GAS_WEB_APP_URL_HERE' || !GAS_API_URL) {
+      document.getElementById('configBanner').style.display = 'block';
+    }
 
     // ── Boot ────────────────────────────────────────
     window.addEventListener('DOMContentLoaded', () => {
-      google.script.run
-        .withSuccessHandler(onStudentsLoaded)
-        .withFailureHandler(onLoadError)
-        .getStudents();
+      loadStudents();
     });
+
+    function loadStudents() {
+      if (GAS_API_URL === 'https://script.google.com/macros/s/AKfycbzv_l1kX2EZOKqw4NRHdVGcfrvCF1rxwxV42VNqVN22OFEX3AUV0iunkE93EthqsPaF/exec' || !GAS_API_URL) {
+        onLoadError(new Error('Web App API URL is not set. Please configure GAS_API_URL in the HTML script tag.'));
+        return;
+      }
+
+      fetch(`${GAS_API_URL}?action=getStudents`)
+        .then(response => {
+          if (!response.ok) throw new Error('API server returned status ' + response.status);
+          return response.json();
+        })
+        .then(res => {
+          if (res.success) {
+            onStudentsLoaded(res.students);
+          } else {
+            throw new Error(res.error || 'Unknown API backend error');
+          }
+        })
+        .catch(err => {
+          onLoadError(err);
+        });
+    }
 
     function onStudentsLoaded(students) {
       allStudents = students;
@@ -672,7 +720,7 @@
         <div class="state">
           <div class="state-icon">❌</div>
           <div class="state-title">Failed to load</div>
-          <div class="state-sub">${esc(err.message)}</div>
+          <div class="state-sub">${esc(err.message || err)}</div>
         </div>`;
     }
 
@@ -688,7 +736,6 @@
       const dept = document.getElementById('deptSelect').value;
       const stuSel = document.getElementById('studentSelect');
 
-      // Reset student
       currentRow   = null;
       capturedBlob = null;
       uploadedBlob = null;
@@ -726,13 +773,11 @@
       const s = allStudents.find(x => x.rowIndex === rowIndex);
       currentRow = s;
 
-      // Show chip
       document.getElementById('chipName').textContent = s.name;
       document.getElementById('chipDept').textContent = [s.department, s.house].filter(Boolean).join(' · ');
       document.getElementById('studentChip').classList.add('visible');
       setStepDone(2, true);
 
-      // Reset photo state
       capturedBlob = null;
       uploadedBlob = null;
       retake();
@@ -883,10 +928,34 @@
       btn.classList.add('saving');
       prog.classList.add('show');
 
-      google.script.run
-        .withSuccessHandler(onSaved)
-        .withFailureHandler(onSaveErr)
-        .savePhoto(currentRow.name, blob.base64, blob.mimeType, currentRow.rowIndex);
+      // Use text/plain header to make it a CORS "simple request" and avoid OPTIONS preflight checks.
+      fetch(GAS_API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/plain;charset=utf-8'
+        },
+        body: JSON.stringify({
+          action: 'savePhoto',
+          name: currentRow.name,
+          base64Data: blob.base64,
+          mimeType: blob.mimeType,
+          rowIndex: currentRow.rowIndex
+        })
+      })
+      .then(response => {
+        if (!response.ok) throw new Error('API server returned status ' + response.status);
+        return response.json();
+      })
+      .then(res => {
+        if (res.success) {
+          onSaved(res);
+        } else {
+          onSaveErr(new Error(res.error || 'Server rejected request'));
+        }
+      })
+      .catch(err => {
+        onSaveErr(err);
+      });
     }
 
     function onSaved(res) {
@@ -897,13 +966,9 @@
       btn.classList.remove('saving');
       prog.classList.remove('show');
 
-      if (!res.success) { showToast('❌ ' + res.error, 'error'); return; }
-
-      // Update local data
       const s = allStudents.find(x => x.rowIndex === currentRow.rowIndex);
       if (s) { s.fileId = res.fileId; s.photoLink = res.viewUrl; }
 
-      // Update student dropdown to show ✓
       const opt = document.querySelector(`#studentSelect option[value="${currentRow.rowIndex}"]`);
       if (opt && !opt.text.includes('✓')) opt.text += ' ✓';
 
@@ -911,7 +976,6 @@
       renderStats();
       renderGrid();
 
-      // Reset capture for next student
       capturedBlob = null;
       uploadedBlob = null;
       retake();
@@ -925,7 +989,7 @@
       document.getElementById('btnSave').textContent = '💾 Save Photo to Drive';
       document.getElementById('btnSave').classList.remove('saving');
       document.getElementById('progressBar').classList.remove('show');
-      showToast('❌ ' + err.message, 'error');
+      showToast('❌ ' + (err.message || err), 'error');
     }
 
     // ── Gallery Rendering ───────────────────────────
@@ -948,11 +1012,9 @@
     function renderGrid() {
       let list = allStudents;
 
-      // filter
       if (gFilter === 'photo')   list = list.filter(s => !!s.fileId);
       if (gFilter === 'nophoto') list = list.filter(s => !s.fileId);
 
-      // search
       if (searchQ) {
         list = list.filter(s =>
           s.name.toLowerCase().includes(searchQ) ||
@@ -1012,22 +1074,18 @@
       document.getElementById('statPending').textContent = total - photos;
     }
 
-    // Quick-select from gallery card
     function selectStudentQuick(rowIndex) {
       const s = allStudents.find(x => x.rowIndex === rowIndex);
       if (!s) return;
 
-      // Set department dropdown
       const deptSel = document.getElementById('deptSelect');
       deptSel.value = s.department;
-      onDeptChange(); // repopulate student dropdown
+      onDeptChange(); 
 
-      // Set student dropdown
       const stuSel = document.getElementById('studentSelect');
       stuSel.value = rowIndex;
       onStudentChange();
 
-      // Scroll to top on mobile
       if (window.innerWidth < 860) window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
